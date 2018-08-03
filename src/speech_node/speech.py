@@ -1,10 +1,10 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
-This node listens to a service call and a topic for text to speech
-requests. These will be processed by the festival or the philips tts module.
-'''
+#'''
+#This node listens to a service call and a topic for text to speech
+#requests. These will be processed by the festival or the philips tts module.
+#'''
 
 import rospy
 
@@ -58,7 +58,7 @@ class TTS(object):
         # No audio sample existed, continuing with TTS
         out = Voice()
         out.interrupting = False
-        out.queueing = False
+        out.queueing = True
         out.language = 1
         out.sentence = req.sentence
 
