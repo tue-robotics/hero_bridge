@@ -71,7 +71,7 @@ class JointTrajectory(object):
              
         if success:
           rospy.loginfo('Trajectory bridge: Succeeded')
-          self.srv_safe_joint_change.set_succeeded(True)
+          self.srv_safe_joint_change.set_succeeded()
        
 
 if __name__ == "__main__":
