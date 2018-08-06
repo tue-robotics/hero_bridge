@@ -11,7 +11,8 @@ import actionlib
 
 from tmc_manipulation_msgs.srv import SafeJointChange
 from sensor_msgs.msg import JointState
-from control_msgs.msg import FollowJointTrajectoryAction
+from tue_manipulation_msgs.msg import GripperCommandAction
+#from control_msgs.msg import FollowJointTrajectoryAction
 import sys
 
 reload(sys)
@@ -24,8 +25,8 @@ class JointTrajectory(object):
         # self.pub_speak = rospy.Publisher("/talk_request", Voice, queue_size=10)
 
         # server
-        self.srv_safe_joint_change = actionlib.SimpleActionServer('body/joint_trajectory_action',
-                                                                  FollowJointTrajectoryAction,
+        self.srv_safe_joint_change = actionlib.SimpleActionServer('/hero/left_arm/gripper/action',
+                                                                  GripperCommandAction,
                                                                   execute_cb=self.safe_joint_change_srv,
 								  auto_start=False)
 	self.srv_safe_joint_change.start()
@@ -51,23 +52,26 @@ class JointTrajectory(object):
 	safeJointChange.header.stamp.nsecs = 0
 	safeJointChange.header.frame_id = ''
 
-	safeJointChange.name = goal.trajectory.joint_names
-	safeJointChange.position = [0 for name in safeJointChange.name]
-	safeJointChange.velocity = [0 for name in safeJointChange.name]
-	safeJointChange.effort = [0 for name in safeJointChange.name]
+	safeJointChange.name = ['hand_motor_joint']
+	safeJointChange.position = [0]
+	safeJointChange.velocity = [0]
+	safeJointChange.effort = [0]
            
-        # start executing the action
-        for point in goal.trajectory.points:
+	if goal.command.direction is goal.command.OPEN:
+          safeJointChange.position=[1.0]
+        elif goal.command.direction is goal.command.CLOSE:
+          safeJointChange.position=[0.0] 
+        else:
+          rospy.loginfo('Trajectory bridge: received gripper goal that is nor OPEN or CLOSE')
+          succes = False
         # check that preempt has not been requested by the client
-          if self.srv_safe_joint_change.is_preempt_requested():
-               rospy.loginfo('Trajectory bridge: Preempted')
-               self.srv_safe_joint_change.set_preempted()
-               success = False
-               break
-          # this step is not necessary, the sequence is computed at 1 Hz for demonstration purposes
-          #r.sleep()
-	  safeJointChange.position = point.positions
-	  self.client_safe_joint_change(safeJointChange) 
+        if self.srv_safe_joint_change.is_preempt_requested():
+          rospy.loginfo('Trajectory bridge: Preempted')
+          self.srv_safe_joint_change.set_preempted()
+          success = False
+         
+	
+        self.client_safe_joint_change(safeJointChange) 
              
         if success:
           rospy.loginfo('Trajectory bridge: Succeeded')
@@ -75,7 +79,7 @@ class JointTrajectory(object):
        
 
 if __name__ == "__main__":
-    rospy.init_node('joint_trajectory_action')
+    rospy.init_node('gripper_bridge')
     joint_trajectory = JointTrajectory()
 
     rospy.spin()
