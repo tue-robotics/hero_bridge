@@ -7,9 +7,10 @@
 #'''
 
 import rospy
+import actionlib
 
 from std_msgs.msg import String
-from tmc_msgs.msg import Voice
+from tmc_msgs.msg import TalkRequestAction, TalkRequestGoal, Voice
 from text_to_speech.srv import Speak, SpeakRequest  # , Play, PlayRequest
 import sys
 
@@ -28,41 +29,30 @@ class TTS(object):
 
         # topics
         self.sub_speak = rospy.Subscriber("~input", String, self.speak)
-        self.pub_speak = rospy.Publisher("/talk_request", Voice, queue_size=10)
+        # self.pub_speak = rospy.Publisher("/talk_request", Voice, queue_size=10)
 
         # services
         self.srv_speak = rospy.Service('~speak', Speak, self.speak_srv)
 
         # clients
-        # self.client_play = rospy.ServiceProxy('play', Play)
+        self.speech_client = actionlib.SimpleActionClient('/talk_request_action', TalkRequestAction)
+        self.speech_client.wait_for_server()
 
     def do_tts(self, req):
         rospy.loginfo('TTS: Toyota TTS, through bridge node. "' + bcolors.OKBLUE + req.sentence + bcolors.ENDC + '"')
 
-        # Check if an audio file for this sentence already exists
-        # for extension in ["wav", "mp3", "oga"]:
-        #     potential_filename = os.path.join(os.path.expanduser(self.samples_path),
-        #                                       req.sentence.lower() + "." + extension)
-        #     rospy.logdebug("Checking for file on path: " + potential_filename)
-        #     if os.path.isfile(potential_filename):
-        #         rospy.logdebug("Found file!")
-        #         play_req = PlayRequest()
-        #         play_req.audio_data = open(potential_filename, "rb").read()
-        #         play_req.audio_type = extension
-        #         play_req.blocking_call = req.blocking_call
-        #         play_req.pitch = 0
-        #         resp = self.client_play(play_req)
-        #         rospy.logdebug("Response: " + resp.error_msg)
-        #         return ""
-
-        # No audio sample existed, continuing with TTS
+        goal = TalkRequestGoal()
         out = Voice()
         out.interrupting = False
         out.queueing = True
         out.language = 1
         out.sentence = req.sentence
+        goal.data = out
 
-        self.pub_speak.publish(out)
+        self.speech_client.send_goal(goal)
+
+        if req.blocking_call:
+            self.speech_client.wait_for_result()
 
     def speak(self, sentence_msg):
         req = SpeakRequest()
@@ -71,7 +61,7 @@ class TTS(object):
         # req.language = self.language
         # req.voice = self.voice
         # req.emotion = self.emotion
-        # req.blocking_call = False
+        req.blocking_call = True
 
         self.do_tts(req)
 
