@@ -62,8 +62,8 @@ class JointTrajectory(object):
                 break
             # this step is not necessary, the sequence is computed at 1 Hz for demonstration purposes
             #r.sleep()
-        safeJointChange.position = point.positions
-        self.client_safe_joint_change(safeJointChange)
+            safeJointChange.position = point.positions
+            self.client_safe_joint_change(safeJointChange)
              
         if success:
             rospy.loginfo('Trajectory bridge: Succeeded')
