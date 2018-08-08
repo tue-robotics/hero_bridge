@@ -16,7 +16,7 @@ from sensor_msgs.msg import JointState
 class Head_bridge(object):
     def __init__(self):
         self.prev_data = JointState()
-        self.prev_data.position = [0.0, 1.0]
+        self.prev_data.position = [0.0, 0.0]
         # topics
         self.sub_speak = rospy.Subscriber("/hero/neck/references", JointState, self.callback)
 
@@ -40,7 +40,10 @@ class Head_bridge(object):
             safeJointChange.header.frame_id = ''
 
             safeJointChange.name = ['head_pan_joint', 'head_tilt_joint']
-            position = [data.position[0], data.position[1]+1.57]
+            position = [data.position[0], -data.position[1]]
+           
+            position[0]=min(max(position[0], -3.84),1.57)
+            position[1]=min(max(position[1], -1.57),0.52)  
             safeJointChange.position = position
             safeJointChange.velocity = [0, 0]
             safeJointChange.effort = [0, 0]
@@ -48,7 +51,8 @@ class Head_bridge(object):
             self.client_safe_joint_change(safeJointChange)
 
             self.prev_data.position = data.position
-             
+            
+            print "pan: " + str(safeJointChange.position[0]) + "  tilt: " + str(safeJointChange.position[1]) 
             if success:
                 rospy.loginfo('Trajectory bridge: Succeeded')
 
