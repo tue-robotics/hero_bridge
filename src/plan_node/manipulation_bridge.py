@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # '''
@@ -9,18 +9,22 @@
 import rospy
 import actionlib
 
-from tf.transformations import quaternion_from_euler
+from tf.transformations import quaternion_from_euler, quaternion_multiply
 from tmc_planning_msgs.srv import PlanWithHandGoals
 from tue_manipulation_msgs.msg import GraspPrecomputeAction
 
 # Preparation to use robot functions
 from hsrb_interface import Robot
-robot = Robot()
-whole_body = robot.try_get('whole_body')
+
+import sys
+reload(sys)
 
 class ManipulationBridge(object):
     def __init__(self):
-
+        
+        # robot
+        self.robot = Robot()
+        self.whole_body = self.robot.try_get('whole_body')
         # server
         self.srv_manipulation = actionlib.SimpleActionServer('/hero/left_arm/grasp_precompute', GraspPrecomputeAction,
                                                              execute_cb=self.manipulation_srv, auto_start=False)
@@ -41,10 +45,12 @@ class ManipulationBridge(object):
 
         # append the seeds for the fibonacci sequence
         point_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
-        point = [action.goal.x, action.goal.y, action.goal.z], point_quaternion
+        static_quaternion = quaternion_from_euler(3.14159265359, -1.57079632679,0)
+        final_quaternion =  quaternion_multiply(point_quaternion, static_quaternion)
+        point = [action.goal.x, action.goal.y, action.goal.z], final_quaternion
 
         try:
-            whole_body.move_end_effector_pose(point)
+            self.whole_body.move_end_effector_pose(point)
         except:
             rospy.logerr('Fail to reach end effector goal')
 
