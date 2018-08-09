@@ -14,12 +14,12 @@ from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
 from tue_manipulation_msgs.msg import GraspPrecomputeAction
 from tmc_manipulation_msgs.msg import BaseMovementType, ArmManipulationErrorCodes
 
-
 # Preparation to use robot functions
 from hsrb_interface import Robot, settings, geometry
 
 import sys
 reload(sys)
+
 
 class ManipulationBridge(object):
     def __init__(self):
@@ -27,6 +27,7 @@ class ManipulationBridge(object):
         # robot
         self.robot = Robot()
         self.whole_body = self.robot.try_get('whole_body')
+
         # server
         self.srv_manipulation = actionlib.SimpleActionServer('/hero/left_arm/grasp_precompute', GraspPrecomputeAction,
                                                              execute_cb=self.manipulation_srv, auto_start=False)
@@ -37,19 +38,20 @@ class ManipulationBridge(object):
 
     def manipulation_srv(self, action):
         """
-        Here the follow joint trajectory action is translated to a GraspPrecomputeAction message type
-        :param action: the FollowJointTrajectoryAction type
-        :return: the SafeJointChange message type
+        Here the grasp precompute action (TU/e) is translated to a PlanWithHandGoals (TMC) and send as goal to the robot
+        :param action: the GraspPrecomputeAction type
         """
         success = True
 
         pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
         static_quaternion = quaternion_from_euler(3.14159265359, -1.57079632679, 0)
-        final_quaternion =  quaternion_multiply(pose_quaternion, static_quaternion)
+        final_quaternion = quaternion_multiply(pose_quaternion, static_quaternion)
         pose = [action.goal.x, action.goal.y, action.goal.z], final_quaternion
 
-        ##########################################################################
-        # Default is the robot frame (the base frame)
+        ################################################################################################################
+        # This piece of code is partially copied from Toyota software, it also uses the private functions (we're very
+        # sorry). Setting base_movement_type.val allows for adapting the allowed movements during manipulation.
+
         ref_frame_id = settings.get_frame('base')
 
         ref_to_hand_poses = [pose]
@@ -67,18 +69,16 @@ class ManipulationBridge(object):
         req.base_movement_type.val = BaseMovementType.ROTATION_Z
 
         service_name = self.whole_body._setting['plan_with_hand_goals_service']
-        plan_service = rospy.ServiceProxy(service_name,
-                                          PlanWithHandGoals)
+        plan_service = rospy.ServiceProxy(service_name, PlanWithHandGoals)
         res = plan_service.call(req)
         if res.error_code.val != ArmManipulationErrorCodes.SUCCESS:
             rospy.logerr('Fail to plan move_endpoint')
             success = False
         res.base_solution.header.frame_id = settings.get_frame('odom')
-        constrained_traj = self.whole_body._constrain_trajectories(res.solution,
-                                                        res.base_solution)
+        constrained_traj = self.whole_body._constrain_trajectories(res.solution, res.base_solution)
         self.whole_body._execute_trajectory(constrained_traj)
 
-        ##################################################################################
+        ################################################################################################################
 
         if success:
             rospy.loginfo('Manipulation bridge: Succeeded')
