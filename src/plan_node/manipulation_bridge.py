@@ -10,11 +10,13 @@ import rospy
 import actionlib
 
 from tf.transformations import quaternion_from_euler, quaternion_multiply
-from tmc_planning_msgs.srv import PlanWithHandGoals
+from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
 from tue_manipulation_msgs.msg import GraspPrecomputeAction
+from tmc_manipulation_msgs.msg import BaseMovementType, ArmManipulationErrorCodes
+
 
 # Preparation to use robot functions
-from hsrb_interface import Robot
+from hsrb_interface import Robot, settings, geometry
 
 import sys
 reload(sys)
@@ -39,20 +41,44 @@ class ManipulationBridge(object):
         :param action: the FollowJointTrajectoryAction type
         :return: the SafeJointChange message type
         """
-        # helper variables
-        # r = rospy.Rate(1)
         success = True
 
-        # append the seeds for the fibonacci sequence
-        point_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
-        static_quaternion = quaternion_from_euler(3.14159265359, -1.57079632679,0)
-        final_quaternion =  quaternion_multiply(point_quaternion, static_quaternion)
-        point = [action.goal.x, action.goal.y, action.goal.z], final_quaternion
+        pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
+        static_quaternion = quaternion_from_euler(3.14159265359, -1.57079632679, 0)
+        final_quaternion =  quaternion_multiply(pose_quaternion, static_quaternion)
+        pose = [action.goal.x, action.goal.y, action.goal.z], final_quaternion
 
-        try:
-            self.whole_body.move_end_effector_pose(point)
-        except:
-            rospy.logerr('Fail to reach end effector goal')
+        ##########################################################################
+        # Default is the robot frame (the base frame)
+        ref_frame_id = settings.get_frame('base')
+
+        ref_to_hand_poses = [pose]
+
+        odom_to_ref_pose = self.whole_body._lookup_odom_to_ref(ref_frame_id)
+        odom_to_ref = geometry.pose_to_tuples(odom_to_ref_pose)
+        odom_to_hand_poses = []
+        for ref_to_hand in ref_to_hand_poses:
+            odom_to_hand = geometry.multiply_tuples(odom_to_ref, ref_to_hand)
+            odom_to_hand_poses.append(geometry.tuples_to_pose(odom_to_hand))
+
+        req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)
+        req.origin_to_hand_goals = odom_to_hand_poses
+        req.ref_frame_id = self.whole_body._end_effector_frame
+        req.base_movement_type.val = BaseMovementType.ROTATION_Z
+
+        service_name = self.whole_body._setting['plan_with_hand_goals_service']
+        plan_service = rospy.ServiceProxy(service_name,
+                                          PlanWithHandGoals)
+        res = plan_service.call(req)
+        if res.error_code.val != ArmManipulationErrorCodes.SUCCESS:
+            rospy.logerr('Fail to plan move_endpoint')
+            success = False
+        res.base_solution.header.frame_id = settings.get_frame('odom')
+        constrained_traj = self.whole_body._constrain_trajectories(res.solution,
+                                                        res.base_solution)
+        self.whole_body._execute_trajectory(constrained_traj)
+
+        ##################################################################################
 
         if success:
             rospy.loginfo('Manipulation bridge: Succeeded')
