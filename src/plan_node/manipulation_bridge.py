@@ -29,12 +29,28 @@ class ManipulationBridge(object):
         self.whole_body = self.robot.try_get('whole_body')
 
         # server
-        self.srv_manipulation = actionlib.SimpleActionServer('/hero/left_arm/grasp_precompute', GraspPrecomputeAction,
-                                                             execute_cb=self.manipulation_srv, auto_start=False)
-        self.srv_manipulation.start()
+        self.srv_manipulation_left = actionlib.SimpleActionServer('/hero/left_arm/grasp_precompute', GraspPrecomputeAction,
+                                                             execute_cb=self.manipulation_srv_left, auto_start=False)
+        self.srv_manipulation_right = actionlib.SimpleActionServer('/hero/right_arm/grasp_precompute', GraspPrecomputeAction,
+                                                             execute_cb=self.manipulation_srv_right, auto_start=False)
+        self.srv_manipulation_left.start()
+        self.srv_manipulation_right.start()
 
         # clients
         self.client_manipulation = rospy.ServiceProxy('/plan_with_hand_goals', PlanWithHandGoals)
+
+    def manipulation_srv_left(self,action):
+        success = self.manipulation_srv(action)
+        if success:
+            rospy.loginfo('Manipulation bridge: Succeeded')
+            self.srv_manipulation_left.set_succeeded()
+
+    def manipulation_srv_right(self,action):
+        success = self.manipulation_srv(action)
+        if success:
+            rospy.loginfo('Manipulation bridge: Succeeded')
+            self.srv_manipulation_right.set_succeeded()
+
 
     def manipulation_srv(self, action):
         """
@@ -74,16 +90,14 @@ class ManipulationBridge(object):
         if res.error_code.val != ArmManipulationErrorCodes.SUCCESS:
             rospy.logerr('Fail to plan move_endpoint')
             success = False
-        res.base_solution.header.frame_id = settings.get_frame('odom')
-        constrained_traj = self.whole_body._constrain_trajectories(res.solution, res.base_solution)
-        self.whole_body._execute_trajectory(constrained_traj)
+        else:
+            res.base_solution.header.frame_id = settings.get_frame('odom')
+            constrained_traj = self.whole_body._constrain_trajectories(res.solution,
+                                                        res.base_solution)
+            self.whole_body._execute_trajectory(constrained_traj)
 
-        ################################################################################################################
-
-        if success:
-            rospy.loginfo('Manipulation bridge: Succeeded')
-            self.srv_manipulation.set_succeeded()
-
+        ##################################################################################
+        return success
 
 if __name__ == "__main__":
     rospy.init_node('manipulation_bridge')

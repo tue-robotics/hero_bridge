@@ -67,10 +67,13 @@ class JointTrajectory(object):
             self.client_safe_joint_change.wait_for_service()
             success=self.client_safe_joint_change(safeJointChange)
             if not success:
+                rospy.logerr('Trajectory bridge failed to change pose')
                 break
-             
+            self.client_safe_joint_change.wait_for_service()
+            rospy.loginfo('position [{}]'.format(point.positions))            
+ 
         if success:
-            rospy.loginfo('Trajectory bridge: Succeeded')
+#            rospy.loginfo('Trajectory bridge: Succeeded')
             self.srv_safe_joint_change.set_succeeded()
        
 
