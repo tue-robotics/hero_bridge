@@ -47,17 +47,16 @@ class Head_bridge(object):
             safeJointChange.position = position
             safeJointChange.velocity = [0, 0]
             safeJointChange.effort = [0, 0]
-
+            self.client_safe_joint_change.wait_for_service() 
             self.client_safe_joint_change(safeJointChange)
 
             self.prev_data.position = data.position
             
-            print "pan: " + str(safeJointChange.position[0]) + "  tilt: " + str(safeJointChange.position[1]) 
-            if success:
-                rospy.loginfo('Trajectory bridge: Succeeded')
+#            if success:
+#                rospy.loginfo('Head bridge: Succeeded')
 
     def reference_changed(self, data):
-            return not (abs(data.position[0]-self.prev_data.position[0]) < 0.001 and abs(data.position[1]-self.prev_data.position[1]) < 0.001) 
+            return not (abs(data.position[0]-self.prev_data.position[0]) < 0.05 and abs(data.position[1]-self.prev_data.position[1]) < 0.5) 
 
 if __name__ == "__main__":
     rospy.init_node('head_ref_bridge')

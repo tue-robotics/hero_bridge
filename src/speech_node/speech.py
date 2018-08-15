@@ -39,7 +39,7 @@ class TTS(object):
         self.speech_client.wait_for_server()
 
     def do_tts(self, req):
-        rospy.loginfo('TTS: Toyota TTS, through bridge node. "' + bcolors.OKBLUE + req.sentence + bcolors.ENDC + '"')
+#        rospy.loginfo('TTS: Toyota TTS, through bridge node. "' + bcolors.OKBLUE + req.sentence + bcolors.ENDC + '"')
 
         goal = TalkRequestGoal()
         out = Voice()
