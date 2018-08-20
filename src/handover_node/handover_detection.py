@@ -15,7 +15,7 @@ sys.setdefaultencoding('utf8')
 
 class HandoverDetector(object):
     def __init__(self, side):
-        self.force_threshold = 8
+        self.force_threshold = 5
         self.timeout = 10
 
         self.prev_force_x = 0
