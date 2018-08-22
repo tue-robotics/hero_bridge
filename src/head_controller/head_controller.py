@@ -15,8 +15,11 @@ from sensor_msgs.msg import JointState
 
 class Head_bridge(object):
     def __init__(self):
+        self.data = JointState()
+        self.data.position = [0.0, 0.0]
         self.prev_data = JointState()
         self.prev_data.position = [0.0, 0.0]
+        
         # topics
         self.sub_speak = rospy.Subscriber("/hero/neck/references", JointState, self.callback)
 
@@ -24,15 +27,13 @@ class Head_bridge(object):
         self.client_safe_joint_change = rospy.ServiceProxy('/safe_pose_changer/change_joint', SafeJointChange)
 
     def callback(self, data):
-        """
-        Here the follow joint trajectory action is translated to a SafeJointChange message type
-        :param data: the FollowJointTrajectoryAction type
-        :return: the SafeJointChange message type
-        """
-        # helper variables
-        success = True
+        self.data.position = data.position
 
-        if self.reference_changed(data):
+    def process_references(self):
+#	rospy.loginfo("current:  {}".format(self.data.position))
+#        rospy.loginfo("previous: {}".format(self.prev_data.position))
+        if self.reference_changed(self.data):
+            self.prev_data.position = self.data.position
             safeJointChange = JointState()
             safeJointChange.header.seq = 0
             safeJointChange.header.stamp.secs = 0
@@ -40,8 +41,8 @@ class Head_bridge(object):
             safeJointChange.header.frame_id = ''
 
             safeJointChange.name = ['head_pan_joint', 'head_tilt_joint']
-            position = [data.position[0], -data.position[1]]
-           
+            position = [self.data.position[0], -self.data.position[1]]
+
             position[0]=min(max(position[0], -3.84),1.57)
             position[1]=min(max(position[1], -1.57),0.52)  
             safeJointChange.position = position
@@ -50,16 +51,16 @@ class Head_bridge(object):
             self.client_safe_joint_change.wait_for_service() 
             self.client_safe_joint_change(safeJointChange)
 
-            self.prev_data.position = data.position
-            
-#            if success:
-#                rospy.loginfo('Head bridge: Succeeded')
+            rospy.loginfo('Head bridge: Succeeded')
 
     def reference_changed(self, data):
-            return not (abs(data.position[0]-self.prev_data.position[0]) < 0.05 and abs(data.position[1]-self.prev_data.position[1]) < 0.5) 
+            return not (abs(data.position[0]-self.prev_data.position[0]) < 0.05 and abs(data.position[1]-self.prev_data.position[1]) < 0.05) 
 
 if __name__ == "__main__":
     rospy.init_node('head_ref_bridge')
     head_bridge = Head_bridge()
+    r = rospy.Rate(25)
 
-    rospy.spin()
+    while not rospy.is_shutdown():
+       head_bridge.process_references()
+       r.sleep()
