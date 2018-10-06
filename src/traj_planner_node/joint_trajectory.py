@@ -58,6 +58,7 @@ class JointTrajectory(object):
            
         # start executing the action
         for point in goal.trajectory.points:
+            rospy.loginfo("started pose in trajectory bridge")
         # check that preempt has not been requested by the client
             if self.srv_safe_joint_change.is_preempt_requested():
                 rospy.loginfo('Trajectory bridge: Preempted')
@@ -76,7 +77,7 @@ class JointTrajectory(object):
             rospy.loginfo('position [{}]'.format(point.positions))            
  
         if success:
-#            rospy.loginfo('Trajectory bridge: Succeeded')
+            rospy.loginfo('Trajectory bridge: Succeeded')
             self.srv_safe_joint_change.set_succeeded()
 
     def moveit_joint_change_srv(self, goal):
@@ -89,8 +90,9 @@ class JointTrajectory(object):
         with hsrb_interface.Robot() as robot:
             whole_body = robot.get('whole_body')
             goals = {}
-            for g in goal:
-                goals[g.trajectory.joint_names] = g.trajectory.points.positions
+	    rospy.loginfo('points: {}'.format(goal.trajectory.points))
+            for n in goal.trajectory.joint_names:
+                goals[n] = goal.trajectory.points
             self.client_moveit_joint_change.wait_for_service()
             success = whole_body.move_to_joint_positions(goals)
 
