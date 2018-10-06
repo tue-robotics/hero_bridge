@@ -13,6 +13,7 @@ from tmc_manipulation_msgs.srv import SafeJointChange
 from tmc_planning_msgs.srv import PlanWithJointGoals
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction
+import hsrb_interface
 import sys
 
 reload(sys)
@@ -78,11 +79,24 @@ class JointTrajectory(object):
 #            rospy.loginfo('Trajectory bridge: Succeeded')
             self.srv_safe_joint_change.set_succeeded()
 
-    # def moveit_joint_change_srv(self, goal):
-    #     """
-    #     :param goal: the FollowJointTrajectoryAction type
-    #     :return: calls the service using the PlanWithJointGoals message type
-    #     """
+    def moveit_joint_change_srv(self, goal):
+        """
+        :param goal: the FollowJointTrajectoryAction type
+        :return:
+        """
+        success = True
+
+        with hsrb_interface.Robot() as robot:
+            whole_body = robot.get('whole_body')
+            goals = {}
+            for g in goal:
+                goals[g.trajectory.joint_names] = g.trajectory.points.positions
+            self.client_moveit_joint_change.wait_for_service()
+            success = whole_body.move_to_joint_positions(goals)
+
+        if success:
+            self.srv_safe_joint_change.set_succeeded()
+
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
