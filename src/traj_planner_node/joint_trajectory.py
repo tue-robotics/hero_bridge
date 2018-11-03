@@ -92,15 +92,17 @@ class JointTrajectory(object):
             goals = {}
             rospy.loginfo('points: {}'.format(goal.trajectory.points))
             i = 0
-            for n in goal.trajectory.joint_names:
-                goals[n] = goal.trajectory.points[0].positions[i]
-                i+=1
-            self.client_moveit_joint_change.wait_for_service()
-            success = whole_body.move_to_joint_positions(goals)
+            for point in goal.trajectory.points:
+                for n in goal.trajectory.joint_names:
+                    goals[n] = point.positions[i]
+                    i+=1
+                    self.client_moveit_joint_change.wait_for_service()
+                    success = whole_body.move_to_joint_positions(goals)
 
-            if success:
-                self.srv_safe_joint_change.set_succeeded()
-            self.client_moveit_joint_change.wait_for_service()
+                    if success:
+                        self.srv_safe_joint_change.set_succeeded()
+
+                    self.client_moveit_joint_change.wait_for_service()
 # raise ROSException("publish() to a closed topic")
 # 'required argument is not a float' when writing '' in goal_state
 
