@@ -91,8 +91,8 @@ class JointTrajectory(object):
             whole_body = robot.get('whole_body')
             goals = {}
             rospy.loginfo('points: {}'.format(goal.trajectory.points))
-            i = 0
             for point in goal.trajectory.points:
+		i = 0
                 for n in goal.trajectory.joint_names:
                     goals[n] = point.positions[i]
                     i+=1
