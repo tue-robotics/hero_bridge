@@ -25,7 +25,7 @@ class JointTrajectory(object):
         # server
         self.srv_safe_joint_change = actionlib.SimpleActionServer('/hero/body/joint_trajectory_action',
                                                                   FollowJointTrajectoryAction,
-                                                                  execute_cb=self.safe_joint_change_srv,
+                                                                  execute_cb=self.moveit_joint_change_srv,
                                                                   auto_start=False)
         self.srv_safe_joint_change.start()
 
@@ -98,7 +98,8 @@ class JointTrajectory(object):
 
         if success:
             self.srv_safe_joint_change.set_succeeded()
-
+# raise ROSException("publish() to a closed topic")
+# 'required argument is not a float' when writing '' in goal_state
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
