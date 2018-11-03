@@ -90,11 +90,13 @@ class JointTrajectory(object):
         with hsrb_interface.Robot() as robot:
             whole_body = robot.get('whole_body')
             goals = {}
-	    rospy.loginfo('points: {}'.format(goal.trajectory.points))
-            for n in goal.trajectory.joint_names:
-                goals[n] = goal.trajectory.points
-            self.client_moveit_joint_change.wait_for_service()
-            success = whole_body.move_to_joint_positions(goals)
+        rospy.loginfo('points: {}'.format(goal.trajectory.points))
+        i = 0
+        for n in goal.trajectory.joint_names:
+            goals[n] = goal.trajectory.points.positions[i]
+            i+=1
+        self.client_moveit_joint_change.wait_for_service()
+        success = whole_body.move_to_joint_positions(goals)
 
         if success:
             self.srv_safe_joint_change.set_succeeded()
