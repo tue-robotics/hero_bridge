@@ -51,13 +51,13 @@ class JointTrajectory(object):
                 self.client_moveit_joint_change.wait_for_service()
                 if not success:
                     rospy.logwarn('Could not successfully move to specified joint goal, '
-                                  'failure occurred at point {} ({}/{})'.format(point, j, len(goal.trajectory.points)))
+                                  'failure occurred at point({}/{}) {}'.format(point, j, len(goal.trajectory.points)))
                     break
 
             if success:
-                self.client_moveit_joint_change.set_succeeded()
+                self.srv_safe_joint_change.set_succeeded()
             else:
-                self.client_moveit_joint_change.set_aborted()
+                self.srv_safe_joint_change.set_aborted()
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
