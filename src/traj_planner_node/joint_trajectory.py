@@ -78,8 +78,13 @@ if __name__ == "__main__":
 
     rospy.spin()
     
-    print("print End of spin")
-    rospy.logwarn("rospy End of spin")
+    print("print End of spin 1")
+    rospy.logwarn("rospy End of spin 1")
+
+    rospy.spin()
+    
+    print("print End of spin 2")
+    rospy.logwarn("rospy End of spin 2")
 
 ###########################################################
     # def move_to_joint_positions(self, goals={}, **kwargs):
