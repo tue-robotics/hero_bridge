@@ -41,21 +41,23 @@ class JointTrajectory(object):
 
         with hsrb_interface.Robot() as robot:
             whole_body = robot.get('whole_body')
-            goals = {}
             rospy.loginfo('points: {}'.format(goal.trajectory.points))
-            for point in goal.trajectory.points:
+            for j, point in enumerate(goal.trajectory.points):
+                joints_goal = {}
                 for i, n in enumerate(goal.trajectory.joint_names):
-                    goals[n] = point.positions[i]
+                    joints_goal[n] = point.positions[i]
                 self.client_moveit_joint_change.wait_for_service()
-                success = whole_body.move_to_joint_positions(goals)
+                success = whole_body.move_to_joint_positions(joints_goal)
                 self.client_moveit_joint_change.wait_for_service()
                 if not success:
                     rospy.logwarn('Could not successfully move to specified joint goal, '
-                                  'failure occurred at {}'.format(point))
+                                  'failure occurred at point {} ({}/{})'.format(point, j, len(goal.trajectory.points)))
                     break
 
             if success:
                 self.client_moveit_joint_change.set_succeeded()
+            else:
+                self.client_moveit_joint_change.set_aborted()
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
