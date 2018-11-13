@@ -30,55 +30,7 @@ class JointTrajectory(object):
         self.srv_safe_joint_change.start()
 
         # clients
-        self.client_safe_joint_change = rospy.ServiceProxy('/safe_pose_changer/change_joint', SafeJointChange)
         self.client_moveit_joint_change = rospy.ServiceProxy('/plan_with_joint_goals', PlanWithJointGoals)
-
-    def safe_joint_change_srv(self, goal):
-        """
-        Here the follow joint trajectory action is translated to a SafeJointChange message type
-        :param goal: the FollowJointTrajectoryAction type
-        :return: the SafeJointChange message type
-        """
-
-        # helper variables
-        # r = rospy.Rate(1)
-        success = True
-           
-        # append the seeds for the fibonacci sequence
-        safeJointChange = JointState()
-        safeJointChange.header.seq = 0 
-        safeJointChange.header.stamp.secs = 0
-        safeJointChange.header.stamp.nsecs = 0
-        safeJointChange.header.frame_id = ''
-
-        safeJointChange.name = goal.trajectory.joint_names
-        safeJointChange.position = [0 for name in safeJointChange.name]
-        safeJointChange.velocity = [0 for name in safeJointChange.name]
-        safeJointChange.effort = [0 for name in safeJointChange.name]
-           
-        # start executing the action
-        for point in goal.trajectory.points:
-            rospy.loginfo("started pose in trajectory bridge")
-        # check that preempt has not been requested by the client
-            if self.srv_safe_joint_change.is_preempt_requested():
-                rospy.loginfo('Trajectory bridge: Preempted')
-                self.srv_safe_joint_change.set_preempted()
-                success = False
-                break
-            # this step is not necessary, the sequence is computed at 1 Hz for demonstration purposes
-            #r.sleep()
-            safeJointChange.position = point.positions
-            self.client_safe_joint_change.wait_for_service()
-            success=self.client_safe_joint_change(safeJointChange)
-            if not success:
-                rospy.logerr('Trajectory bridge failed to change pose')
-                break
-            self.client_safe_joint_change.wait_for_service()
-            rospy.loginfo('position [{}]'.format(point.positions))            
- 
-        if success:
-            rospy.loginfo('Trajectory bridge: Succeeded')
-            self.srv_safe_joint_change.set_succeeded()
 
     def moveit_joint_change_srv(self, goal):
         """
@@ -92,7 +44,7 @@ class JointTrajectory(object):
             goals = {}
             rospy.loginfo('points: {}'.format(goal.trajectory.points))
             for point in goal.trajectory.points:
-		i = 0
+                i = 0
                 for n in goal.trajectory.joint_names:
                     goals[n] = point.positions[i]
                     i+=1
@@ -100,11 +52,9 @@ class JointTrajectory(object):
                     success = whole_body.move_to_joint_positions(goals)
 
                     if success:
-                        self.srv_safe_joint_change.set_succeeded()
+                        self.client_moveit_joint_change.set_succeeded()
 
                     self.client_moveit_joint_change.wait_for_service()
-# raise ROSException("publish() to a closed topic")
-# 'required argument is not a float' when writing '' in goal_state
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
