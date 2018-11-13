@@ -50,11 +50,10 @@ class JointTrajectory(object):
                     i+=1
                     self.client_moveit_joint_change.wait_for_service()
                     success = whole_body.move_to_joint_positions(goals)
-
-                    if success:
-                        self.client_moveit_joint_change.set_succeeded()
-
                     self.client_moveit_joint_change.wait_for_service()
+
+            if success:
+                self.client_moveit_joint_change.set_succeeded()
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
