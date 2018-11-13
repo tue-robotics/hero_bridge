@@ -44,13 +44,15 @@ class JointTrajectory(object):
             goals = {}
             rospy.loginfo('points: {}'.format(goal.trajectory.points))
             for point in goal.trajectory.points:
-                i = 0
-                for n in goal.trajectory.joint_names:
+                for i, n in enumerate(goal.trajectory.joint_names):
                     goals[n] = point.positions[i]
-                    i+=1
-                    self.client_moveit_joint_change.wait_for_service()
-                    success = whole_body.move_to_joint_positions(goals)
-                    self.client_moveit_joint_change.wait_for_service()
+                self.client_moveit_joint_change.wait_for_service()
+                success = whole_body.move_to_joint_positions(goals)
+                self.client_moveit_joint_change.wait_for_service()
+                if not success:
+                    rospy.logwarn('Could not successfully move to specified joint goal, '
+                                  'failure occurred at {}'.format(point))
+                    break
 
             if success:
                 self.client_moveit_joint_change.set_succeeded()
