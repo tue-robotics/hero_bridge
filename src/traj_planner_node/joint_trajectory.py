@@ -47,6 +47,7 @@ class JointTrajectory(object):
                 for i, n in enumerate(goal.trajectory.joint_names):
                     joints_goal[n] = point.positions[i]
                 self.client_moveit_joint_change.wait_for_service()
+                rospy.logwarn('Joint goal is {}'.format(joints_goal))
                 success = whole_body.move_to_joint_positions(joints_goal)
                 self.client_moveit_joint_change.wait_for_service()
                 if not success:
