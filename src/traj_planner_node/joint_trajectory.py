@@ -69,11 +69,13 @@ class JointTrajectory(object):
             rospy.logwarn("All positions processed, success = {}".format(success))
             
             if success:
-                rospy.logwarn("self.srv_safe_joint_change.set_succeeded()")
+                rospy.logwarn("self.srv_safe_joint_change.set_succeeded() START")
                 self.srv_safe_joint_change.set_succeeded()
+                rospy.logwarn("self.srv_safe_joint_change.set_succeeded() DONE")
             else:
-                rospy.logwarn("self.srv_safe_joint_change.set_aborted()")
+                rospy.logwarn("self.srv_safe_joint_change.set_aborted() START")
                 self.srv_safe_joint_change.set_aborted()
+                rospy.logwarn("self.srv_safe_joint_change.set_aborted() DONE")
         
         rospy.logwarn("moveit_joint_change_action finished")
 
