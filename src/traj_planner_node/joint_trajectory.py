@@ -21,6 +21,12 @@ sys.setdefaultencoding('utf8')
 
 class JointTrajectory(object):
     def __init__(self):
+
+        rospy.loginfo("Getting robot")
+        self._robot = hsrb_interface.Robot()
+        self._whole_body = self._robot.try_get('whole_body')
+        rospy.loginfo("Got whole_body")
+
         # server
         self.srv_safe_joint_change = actionlib.SimpleActionServer('/hero/body/joint_trajectory_action',
                                                                   FollowJointTrajectoryAction,
@@ -40,39 +46,33 @@ class JointTrajectory(object):
         try:
             success = True
 
-            rospy.logwarn("moveit_joint_change_action started")
-            rospy.loginfo("Getting robot")
-            with hsrb_interface.Robot() as robot:
-                rospy.loginfo("Got robot, getting whole_body")
-                whole_body = robot.get('whole_body')
-                rospy.loginfo("Got whole_body")
-            #     rospy.loginfo('points: {}'.format(goal.trajectory.points))
-            #     for j, point in enumerate(goal.trajectory.points):
-            #         rospy.logwarn("Process point {}: {}".format(j, point))
-            #         joints_goal = {}
-            #         for i, n in enumerate(goal.trajectory.joint_names):
-            #             rospy.logwarn("Process joint {}: {}".format(i, n))
-            #             joints_goal[n] = point.positions[i]
-            #         self.client_moveit_joint_change.wait_for_service()
-            #         rospy.logwarn('joints_goal is {}'.format(joints_goal))
-            #         try:
-            #             rospy.logwarn('Call whole_body.move_to_joint_positions(joint_goal)')
-            #             whole_body.move_to_joint_positions(joints_goal)
-            #             rospy.logwarn('Call whole_body.move_to_joint_positions(joint_goal) DONE')
-            #             success = True
-            #         except Exception as e: # TODO: catch specific exception, probably hsrb_interface.exceptions.MotionPlanningError
-            #             success = False
-            #             rospy.logwarn('Move_to_joint_positions raised exception "{}"'.format(e))
-            #
-            #         rospy.logwarn("self.client_moveit_joint_change.wait_for_service()")
-            #         self.client_moveit_joint_change.wait_for_service()
-            #         if not success:
-            #             rospy.logwarn('Could not successfully move to specified joint goal, '
-            #                           'failure occurred at point({}/{}) {}'.format(j, len(goal.trajectory.points), point))
-            #             # break
-            #
-            #     rospy.logwarn("All positions processed, success = {}".format(success))
-            #
+            rospy.loginfo('points: {}'.format(goal.trajectory.points))
+            for j, point in enumerate(goal.trajectory.points):
+                rospy.logwarn("Process point {}: {}".format(j, point))
+                joints_goal = {}
+                for i, n in enumerate(goal.trajectory.joint_names):
+                    rospy.logwarn("Process joint {}: {}".format(i, n))
+                    joints_goal[n] = point.positions[i]
+                self.client_moveit_joint_change.wait_for_service()
+                rospy.logwarn('joints_goal is {}'.format(joints_goal))
+                try:
+                    rospy.logwarn('Call whole_body.move_to_joint_positions(joint_goal)')
+                    self._whole_body.move_to_joint_positions(joints_goal)
+                    rospy.logwarn('Call whole_body.move_to_joint_positions(joint_goal) DONE')
+                    success = True
+                except Exception as e: # TODO: catch specific exception, probably hsrb_interface.exceptions.MotionPlanningError
+                    success = False
+                    rospy.logwarn('Move_to_joint_positions raised exception "{}"'.format(e))
+
+                rospy.logwarn("self.client_moveit_joint_change.wait_for_service()")
+                self.client_moveit_joint_change.wait_for_service()
+                if not success:
+                    rospy.logwarn('Could not successfully move to specified joint goal, '
+                                  'failure occurred at point({}/{}) {}'.format(j, len(goal.trajectory.points), point))
+                    # break
+
+            rospy.logwarn("All positions processed, success = {}".format(success))
+
             if success:
                 rospy.logwarn("self.srv_safe_joint_change.set_succeeded() START")
                 self.srv_safe_joint_change.set_succeeded()
