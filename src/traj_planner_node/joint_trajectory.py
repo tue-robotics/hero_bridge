@@ -87,10 +87,14 @@ if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
     joint_trajectory = JointTrajectory()
 
-    rospy.spin()
+    while not rospy.is_shutdown():
+        rospy.spin_once()
+    else:
+        print("rospy.is_shutdown()")
+        rospy.logwarn("rospy.is_shutdown()")
     
-    print("print End of spin 1")
-    rospy.logwarn("rospy End of spin 1")
+    print("print End of spin")
+    rospy.logwarn("rospy End of spin")
 
 ###########################################################
     # def move_to_joint_positions(self, goals={}, **kwargs):
