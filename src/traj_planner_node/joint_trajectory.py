@@ -41,8 +41,11 @@ class JointTrajectory(object):
             success = True
 
             rospy.logwarn("moveit_joint_change_action started")
+            rospy.loginfo("Getting robot")
             with hsrb_interface.Robot() as robot:
+                rospy.loginfo("Got robot, getting whole_body")
                 whole_body = robot.get('whole_body')
+                rospy.loginfo("Got whole_body")
             #     rospy.loginfo('points: {}'.format(goal.trajectory.points))
             #     for j, point in enumerate(goal.trajectory.points):
             #         rospy.logwarn("Process point {}: {}".format(j, point))
