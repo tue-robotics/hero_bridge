@@ -87,11 +87,7 @@ if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
     joint_trajectory = JointTrajectory()
 
-    while not rospy.is_shutdown():
-        rospy.spin_once()
-    else:
-        print("rospy.is_shutdown()")
-        rospy.logwarn("rospy.is_shutdown()")
+    rospy.spin()
     
     print("print End of spin")
     rospy.logwarn("rospy End of spin")
