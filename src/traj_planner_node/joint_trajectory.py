@@ -21,40 +21,45 @@ sys.setdefaultencoding('utf8')
 
 class JointTrajectory(object):
     def __init__(self):
-
         # server
         self.srv_safe_joint_change = actionlib.SimpleActionServer('/hero/body/joint_trajectory_action',
                                                                   FollowJointTrajectoryAction,
-                                                                  execute_cb=self.moveit_joint_change_srv,
-                                                                  auto_start=True)
-        #self.srv_safe_joint_change.start()
+                                                                  execute_cb=self.moveit_joint_change_action,
+                                                                  auto_start=False)
+        self.srv_safe_joint_change.start()
 
         # clients
         self.client_moveit_joint_change = rospy.ServiceProxy('/plan_with_joint_goals', PlanWithJointGoals)
 
-    def moveit_joint_change_srv(self, goal):
+    def moveit_joint_change_action(self, goal):
         """
         :param goal: the FollowJointTrajectoryAction type
         :return:
         """
         success = True
 
-        rospy.logwarn("moveit_joint_change_srv started")
+        rospy.logwarn("moveit_joint_change_action started")
         with hsrb_interface.Robot() as robot:
             whole_body = robot.get('whole_body')
             rospy.loginfo('points: {}'.format(goal.trajectory.points))
             for j, point in enumerate(goal.trajectory.points):
+                rospy.logwarn("Process point {}: {}".format(j, point))
                 joints_goal = {}
                 for i, n in enumerate(goal.trajectory.joint_names):
+                    rospy.logwarn("Process joint {}: {}".format(i, n))
                     joints_goal[n] = point.positions[i]
                 self.client_moveit_joint_change.wait_for_service()
-                rospy.logwarn('Joint goal is {}'.format(joints_goal))
+                rospy.logwarn('joints_goal is {}'.format(joints_goal))
                 try:
+                    rospy.logwarn('Call whole_body.move_to_joint_positions(joint_goal)')
                     whole_body.move_to_joint_positions(joints_goal)
+                    rospy.logwarn('Call whole_body.move_to_joint_positions(joint_goal) DONE')
                     success = True
                 except Exception as e: # TODO: catch specific exception, probably hsrb_interface.exceptions.MotionPlanningError
                     success = False
                     rospy.logwarn('Move_to_joint_positions raised exception "{}"'.format(e))
+
+                rospy.logwarn("self.client_moveit_joint_change.wait_for_service()")
                 self.client_moveit_joint_change.wait_for_service()
                 if not success:
                     rospy.logwarn('Could not successfully move to specified joint goal, '
@@ -70,7 +75,7 @@ class JointTrajectory(object):
                 rospy.logwarn("self.srv_safe_joint_change.set_aborted()")
                 self.srv_safe_joint_change.set_aborted()
         
-        rospy.logwarn("moveit_joint_change_srv finished")
+        rospy.logwarn("moveit_joint_change_action finished")
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
@@ -80,11 +85,6 @@ if __name__ == "__main__":
     
     print("print End of spin 1")
     rospy.logwarn("rospy End of spin 1")
-
-    rospy.spin()
-    
-    print("print End of spin 2")
-    rospy.logwarn("rospy End of spin 2")
 
 ###########################################################
     # def move_to_joint_positions(self, goals={}, **kwargs):
