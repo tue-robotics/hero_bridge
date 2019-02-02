@@ -17,13 +17,10 @@ from tmc_manipulation_msgs.msg import BaseMovementType, ArmManipulationErrorCode
 # Preparation to use robot functions
 from hsrb_interface import Robot, settings, geometry
 
-import sys
-reload(sys)
-
 
 class ManipulationBridge(object):
     def __init__(self):
-        
+
         # robot
         self.robot = Robot()
         self.whole_body = self.robot.try_get('whole_body')
@@ -36,21 +33,17 @@ class ManipulationBridge(object):
         self.srv_manipulation_left.start()
         self.srv_manipulation_right.start()
 
-        # clients
-        self.client_manipulation = rospy.ServiceProxy('/plan_with_hand_goals', PlanWithHandGoals)
-
-    def manipulation_srv_left(self,action):
+    def manipulation_srv_left(self, action):
         success = self.manipulation_srv(action)
         if success:
             rospy.loginfo('Manipulation bridge: Succeeded')
             self.srv_manipulation_left.set_succeeded()
 
-    def manipulation_srv_right(self,action):
+    def manipulation_srv_right(self, action):
         success = self.manipulation_srv(action)
         if success:
             rospy.loginfo('Manipulation bridge: Succeeded')
             self.srv_manipulation_right.set_succeeded()
-
 
     def manipulation_srv(self, action):
         """
@@ -92,12 +85,11 @@ class ManipulationBridge(object):
             success = False
         else:
             res.base_solution.header.frame_id = settings.get_frame('odom')
-            constrained_traj = self.whole_body._constrain_trajectories(res.solution,
-                                                        res.base_solution)
+            constrained_traj = self.whole_body._constrain_trajectories(res.solution, res.base_solution)
             self.whole_body._execute_trajectory(constrained_traj)
 
-        ##################################################################################
         return success
+
 
 if __name__ == "__main__":
     rospy.init_node('manipulation_bridge')
