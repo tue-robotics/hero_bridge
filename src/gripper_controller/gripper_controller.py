@@ -30,7 +30,7 @@ class JointTrajectory(object):
 
         # clients
         self.client_safe_joint_change = rospy.ServiceProxy('/safe_pose_changer/change_joint', SafeJointChange)
-        self._grasp_client = actionlib.SimpleActionClient('/hsrb/gripper_controller/grasp', GripperApplyEffortAction)
+        self._grasp_client = actionlib.SimpleActionClient('gripper_controller/grasp', GripperApplyEffortAction)
 
     def gripper_left(self, goal):
         self.success = self.safe_joint_change_srv(goal)
