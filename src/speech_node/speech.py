@@ -11,16 +11,18 @@ import actionlib
 
 from std_msgs.msg import String
 from tmc_msgs.msg import TalkRequestAction, TalkRequestGoal, Voice
-from text_to_speech.srv import Speak, SpeakRequest  # , Play, PlayRequest
-import sys
-
-reload(sys)
-sys.setdefaultencoding('utf8')
+from text_to_speech.srv import Speak, SpeakRequest
 
 
 class bcolors:
+    HEADER = '\033[95m'
     OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
     ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 class TTS(object):
@@ -39,7 +41,7 @@ class TTS(object):
         self.speech_client.wait_for_server()
 
     def do_tts(self, req):
-#        rospy.loginfo('TTS: Toyota TTS, through bridge node. "' + bcolors.OKBLUE + req.sentence + bcolors.ENDC + '"')
+        # rospy.loginfo('TTS: Toyota TTS, through bridge node. "' + bcolors.OKBLUE + req.sentence + bcolors.ENDC + '"')
 
         goal = TalkRequestGoal()
         out = Voice()

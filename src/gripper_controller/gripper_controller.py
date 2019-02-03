@@ -11,10 +11,6 @@ from tue_manipulation_msgs.msg import GripperCommandAction
 from tmc_control_msgs.msg import GripperApplyEffortAction
 from tmc_control_msgs.msg import GripperApplyEffortGoal
 
-import sys
-
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 class JointTrajectory(object):
     def __init__(self):

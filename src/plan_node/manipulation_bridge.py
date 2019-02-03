@@ -26,10 +26,14 @@ class ManipulationBridge(object):
         self.whole_body = self.robot.try_get('whole_body')
 
         # server
-        self.srv_manipulation_left = actionlib.SimpleActionServer('/hero/left_arm/grasp_precompute', GraspPrecomputeAction,
-                                                             execute_cb=self.manipulation_srv_left, auto_start=False)
-        self.srv_manipulation_right = actionlib.SimpleActionServer('/hero/right_arm/grasp_precompute', GraspPrecomputeAction,
-                                                             execute_cb=self.manipulation_srv_right, auto_start=False)
+        self.srv_manipulation_left = actionlib.SimpleActionServer('/hero/left_arm/grasp_precompute',
+                                                                  GraspPrecomputeAction,
+                                                                  execute_cb=self.manipulation_srv_left,
+                                                                  auto_start=False)
+        self.srv_manipulation_right = actionlib.SimpleActionServer('/hero/right_arm/grasp_precompute',
+                                                                   GraspPrecomputeAction,
+                                                                   execute_cb=self.manipulation_srv_right,
+                                                                   auto_start=False)
         self.srv_manipulation_left.start()
         self.srv_manipulation_right.start()
 

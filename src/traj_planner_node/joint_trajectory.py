@@ -10,14 +10,9 @@ import rospy
 import actionlib
 
 from tmc_manipulation_msgs.srv import SafeJointChange
-from tmc_planning_msgs.srv import PlanWithJointGoals
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction
-import hsrb_interface
-import sys
 
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 class JointTrajectory(object):
     def __init__(self):
@@ -78,6 +73,7 @@ class JointTrajectory(object):
         if success:
             rospy.loginfo('Trajectory bridge: Succeeded')
             self.srv_safe_joint_change.set_succeeded()
+
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
