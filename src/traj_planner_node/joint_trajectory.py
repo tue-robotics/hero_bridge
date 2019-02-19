@@ -18,14 +18,14 @@ class JointTrajectory(object):
     def __init__(self):
 
         # server
-        self.srv_safe_joint_change = actionlib.SimpleActionServer('/hero/body/joint_trajectory_action',
+        self.srv_safe_joint_change = actionlib.SimpleActionServer('body/joint_trajectory_action',
                                                                   FollowJointTrajectoryAction,
                                                                   execute_cb=self.safe_joint_change_srv,
                                                                   auto_start=False)
         self.srv_safe_joint_change.start()
 
         # clients
-        self.client_safe_joint_change = rospy.ServiceProxy('/safe_pose_changer/change_joint', SafeJointChange)
+        self.client_safe_joint_change = rospy.ServiceProxy('safe_pose_changer/change_joint', SafeJointChange)
 
     def safe_joint_change_srv(self, goal):
         """
@@ -37,10 +37,10 @@ class JointTrajectory(object):
         # helper variables
         # r = rospy.Rate(1)
         success = True
-           
+
         # append the seeds for the fibonacci sequence
         safeJointChange = JointState()
-        safeJointChange.header.seq = 0 
+        safeJointChange.header.seq = 0
         safeJointChange.header.stamp.secs = 0
         safeJointChange.header.stamp.nsecs = 0
         safeJointChange.header.frame_id = ''
@@ -49,7 +49,7 @@ class JointTrajectory(object):
         safeJointChange.position = [0 for name in safeJointChange.name]
         safeJointChange.velocity = [0 for name in safeJointChange.name]
         safeJointChange.effort = [0 for name in safeJointChange.name]
-           
+
         # start executing the action
         for point in goal.trajectory.points:
             rospy.loginfo("started pose in trajectory bridge")
@@ -68,8 +68,8 @@ class JointTrajectory(object):
                 rospy.logerr('Trajectory bridge failed to change pose')
                 break
             self.client_safe_joint_change.wait_for_service()
-            rospy.loginfo('position [{}]'.format(point.positions))            
- 
+            rospy.loginfo('position [{}]'.format(point.positions))
+
         if success:
             rospy.loginfo('Trajectory bridge: Succeeded')
             self.srv_safe_joint_change.set_succeeded()

@@ -18,12 +18,12 @@ class HeadBridge(object):
         self.data.position = [0.0, 0.0]
         self.prev_data = JointState()
         self.prev_data.position = [0.0, 0.0]
-        
+
         # topics
-        self.sub_speak = rospy.Subscriber("/hero/neck/references", JointState, self.callback)
+        self.sub_speak = rospy.Subscriber("neck/references", JointState, self.callback)
 
         # clients
-        self.client_safe_joint_change = rospy.ServiceProxy('/safe_pose_changer/change_joint', SafeJointChange)
+        self.client_safe_joint_change = rospy.ServiceProxy('safe_pose_changer/change_joint', SafeJointChange)
 
     def callback(self, data):
         self.data.position = data.position
@@ -47,7 +47,7 @@ class HeadBridge(object):
             safeJointChange.position = position
             safeJointChange.velocity = [0, 0]
             safeJointChange.effort = [0, 0]
-            self.client_safe_joint_change.wait_for_service() 
+            self.client_safe_joint_change.wait_for_service()
             self.client_safe_joint_change(safeJointChange)
 
             rospy.loginfo('Head bridge: Succeeded')

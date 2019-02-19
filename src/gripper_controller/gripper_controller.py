@@ -17,11 +17,11 @@ class JointTrajectory(object):
         self.success = True
 
         # server
-        self.srv_safe_joint_change_left = actionlib.SimpleActionServer('/hero/left_arm/gripper/action',
+        self.srv_safe_joint_change_left = actionlib.SimpleActionServer('left_arm/gripper/action',
                                                                        GripperCommandAction,
                                                                        execute_cb=self.gripper_left,
                                                                        auto_start=False)
-        self.srv_safe_joint_change_right = actionlib.SimpleActionServer('/hero/right_arm/gripper/action',
+        self.srv_safe_joint_change_right = actionlib.SimpleActionServer('right_arm/gripper/action',
                                                                         GripperCommandAction,
                                                                         execute_cb=self.gripper_right,
                                                                         auto_start=False)
@@ -29,7 +29,7 @@ class JointTrajectory(object):
         self.srv_safe_joint_change_right.start()
 
         # clients
-        self.client_safe_joint_change = rospy.ServiceProxy('/safe_pose_changer/change_joint', SafeJointChange)
+        self.client_safe_joint_change = rospy.ServiceProxy('safe_pose_changer/change_joint', SafeJointChange)
         self._grasp_client = actionlib.SimpleActionClient('gripper_controller/grasp', GripperApplyEffortAction)
 
     def gripper_left(self, goal):
@@ -48,7 +48,7 @@ class JointTrajectory(object):
         :param goal: the FollowJointTrajectoryAction type
         :return: the SafeJointChange message type
         """
-           
+
         if goal.command.direction is goal.command.OPEN:
             return self._open_gripper()
         elif goal.command.direction is goal.command.CLOSE:
@@ -56,7 +56,7 @@ class JointTrajectory(object):
         else:
             rospy.loginfo('Trajectory bridge: received gripper goal that is nor OPEN or CLOSE')
             return False
-       
+
     def _open_gripper(self):
         safeJointChange = JointState()
         safeJointChange.header.seq = 0

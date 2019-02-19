@@ -22,13 +22,13 @@ class HandoverDetector(object):
         self.force_z = 0
 
         # server
-        self.sub_r2h = rospy.Subscriber("/hero/handoverdetector_" + side + "/toggle_robot2human",
+        self.sub_r2h = rospy.Subscriber("handoverdetector_" + side + "/toggle_robot2human",
                                         Bool, self.detect_handover)
-        self.sub_h2r = rospy.Subscriber("/hero/handoverdetector_" + side + "/toggle_human2robot",
+        self.sub_h2r = rospy.Subscriber("handoverdetector_" + side + "/toggle_human2robot",
                                         Bool, self.detect_handover)
         self.sub_wrist_wrench = rospy.Subscriber("wrist_wrench/raw", WrenchStamped, self.update_forces)
 
-        self.pub_result = rospy.Publisher("/hero/handoverdetector_" + side + "/result", Bool, queue_size=1)
+        self.pub_result = rospy.Publisher("handoverdetector_" + side + "/result", Bool, queue_size=1)
 
     def detect_handover(self, data):
         if data.data:
