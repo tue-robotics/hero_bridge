@@ -17,6 +17,6 @@
         <remap from="/hsrb/impedance_control/joint_names" to="impedance_control/joint_names" />
     </node>
 
-    <rosparam command="load" file="$(find hsrb_impedance_control)/launch/configurations.yaml" ns="/hsrb" />
+    <rosparam command="load" file="$(find hsrb_impedance_control)/launch/configurations.yaml" />
 
 </launch>
