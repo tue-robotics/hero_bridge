@@ -7,11 +7,6 @@ import math
 from std_msgs.msg import Bool
 from geometry_msgs.msg import WrenchStamped
 
-import sys
-
-reload(sys)
-sys.setdefaultencoding('utf8')
-
 
 class HandoverDetector(object):
     def __init__(self, side):
@@ -27,13 +22,13 @@ class HandoverDetector(object):
         self.force_z = 0
 
         # server
-        self.sub_r2h = rospy.Subscriber("/hero/handoverdetector_" + side + "/toggle_robot2human",
+        self.sub_r2h = rospy.Subscriber("handoverdetector_" + side + "/toggle_robot2human",
                                         Bool, self.detect_handover)
-        self.sub_h2r = rospy.Subscriber("/hero/handoverdetector_" + side + "/toggle_human2robot",
+        self.sub_h2r = rospy.Subscriber("handoverdetector_" + side + "/toggle_human2robot",
                                         Bool, self.detect_handover)
-        self.sub_wrist_wrench = rospy.Subscriber("/hsrb/wrist_wrench/raw", WrenchStamped, self.update_forces)
+        self.sub_wrist_wrench = rospy.Subscriber("wrist_wrench/raw", WrenchStamped, self.update_forces)
 
-        self.pub_result = rospy.Publisher("/hero/handoverdetector_" + side + "/result", Bool, queue_size=1)
+        self.pub_result = rospy.Publisher("handoverdetector_" + side + "/result", Bool, queue_size=1)
 
     def detect_handover(self, data):
         if data.data:
@@ -46,14 +41,13 @@ class HandoverDetector(object):
             start = rospy.Time.now()
             while rospy.Time.now() - start < rospy.Duration(self.timeout):
                 if self.handover():
-		    success = True
+                    success = True
                     self.pub_result.publish(Bool(success))
-		    break
+                    break
                 else:
                     rospy.sleep(0.1)
-	else:
+        else:
             rospy.loginfo("toggle sent which is not True")
-	
 
     def handover(self):
         dx = self.force_x - self.prev_force_x
@@ -69,11 +63,9 @@ class HandoverDetector(object):
         self.force_z = wrenchstamped.wrench.force.z
 
 
-
-
 if __name__ == "__main__":
     rospy.init_node('hand_over_detector')
-    handover_detection = HandoverDetector("left")
-    handover_detection = HandoverDetector("right")
+    handover_detection_l = HandoverDetector("left")
+    handover_detection_r = HandoverDetector("right")
 
     rospy.spin()
