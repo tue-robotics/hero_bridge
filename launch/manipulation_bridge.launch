@@ -16,6 +16,7 @@
         <remap from="/hsrb/impedance_control/follow_joint_trajectory/" to="impedance_control/follow_joint_trajectory" />
         <remap from="/hsrb/impedance_control/joint_names" to="impedance_control/joint_names" />
         <remap from="/plan_with_hand_goals" to="plan_with_hand_goals"/>
+        <remap from="/filter_hsrb_trajectory" to="filter_hsrb_trajectory"/>
     </node>
 
     <rosparam command="load" file="$(find hsrb_impedance_control)/launch/configurations.yaml" />
