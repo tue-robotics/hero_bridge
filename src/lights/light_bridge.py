@@ -3,7 +3,7 @@
 
 import rospy
 
-from amigo_msgs.msg import RGBLightCommand
+from tue_msgs.msg import RGBLightCommand
 from std_msgs.msg import ColorRGBA
 
 
