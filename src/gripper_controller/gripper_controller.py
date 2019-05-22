@@ -52,7 +52,7 @@ class GripperNode(object):
         :return: the SafeJointChange message type
         """
         if goal.command.direction is goal.command.OPEN:
-            return self._open_gripper(goal.command.max_torque)
+            return self._open_gripper()
         elif goal.command.direction is goal.command.CLOSE:
             if goal.command.max_torque > 0:
                 return self._close_gripper(goal.command.max_torque)
