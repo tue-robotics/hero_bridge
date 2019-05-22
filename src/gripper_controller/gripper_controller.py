@@ -80,7 +80,7 @@ class GripperNode(object):
 
         return out
 
-    def _close_gripper(self, effort=-0.1):
+    def _close_gripper(self, effort=0.1):
         goal = GripperApplyEffortGoal()
         goal.effort = -effort * HAND_MOMENT_ARM_LENGTH
         self._grasp_client.send_goal(goal)
