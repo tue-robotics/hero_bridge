@@ -77,7 +77,7 @@ class JointTrajectory(object):
         return out
 
     def _close_gripper(self):
-        effort = 0.1  # 0.1 Newton is enough for nearly everything
+        effort = 0.15  # 0.1 Newton is enough for nearly everything
         _HAND_MOMENT_ARM_LENGTH = 0.07
 
         goal = GripperApplyEffortGoal()
