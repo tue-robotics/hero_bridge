@@ -40,21 +40,39 @@ class TTS(object):
         self.speech_client = actionlib.SimpleActionClient('/talk_request_action', TalkRequestAction)
         self.speech_client.wait_for_server()
 
+        # buffer and goal state
+        self.buffer = []
+        self.goal_state = actionlib.SimpleGoalState
+
     def do_tts(self, req):
         # rospy.loginfo('TTS: Toyota TTS, through bridge node. "' + bcolors.OKBLUE + req.sentence + bcolors.ENDC + '"')
+
+        self.buffer += [req]
+
+        # rospy.loginfo(self.speech_client.simple_state)
+
+        while not rospy.is_shutdown() and self.buffer and self.speech_client.simple_state == self.goal_state.ACTIVE \
+                and self.buffer[0].blocking_call:
+            rospy.loginfo("Currently waiting to finish previous speech input.")
+            rospy.sleep(0.1)
+
+        # rospy.loginfo("after: {}".format(self.speech_client.simple_state))
 
         goal = TalkRequestGoal()
         out = Voice()
         out.interrupting = False
         out.queueing = True
         out.language = 1
-        out.sentence = req.sentence
+        out.sentence = self.buffer[0].sentence
         goal.data = out
 
         self.speech_client.send_goal(goal)
 
-        if req.blocking_call:
-            self.speech_client.wait_for_result()
+        if self.buffer:
+            self.buffer.pop(0)
+
+        # if req.blocking_call:
+        #     self.speech_client.wait_for_result()
 
     def speak(self, sentence_msg):
         req = SpeakRequest()
