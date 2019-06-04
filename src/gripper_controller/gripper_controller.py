@@ -12,7 +12,10 @@ from tmc_control_msgs.msg import GripperApplyEffortAction
 from tmc_control_msgs.msg import GripperApplyEffortGoal
 
 
-class JointTrajectory(object):
+HAND_MOMENT_ARM_LENGTH = 0.07
+
+
+class GripperNode(object):
     def __init__(self):
         self.success = True
 
@@ -48,50 +51,50 @@ class JointTrajectory(object):
         :param goal: the FollowJointTrajectoryAction type
         :return: the SafeJointChange message type
         """
-
         if goal.command.direction is goal.command.OPEN:
             return self._open_gripper()
         elif goal.command.direction is goal.command.CLOSE:
-            return self._close_gripper()
+            if goal.command.max_torque > 0:
+                return self._close_gripper(goal.command.max_torque)
+            else:
+                return self._close_gripper()
         else:
             rospy.loginfo('Trajectory bridge: received gripper goal that is nor OPEN or CLOSE')
             return False
 
     def _open_gripper(self):
-        safeJointChange = JointState()
-        safeJointChange.header.seq = 0
-        safeJointChange.header.stamp.secs = 0
-        safeJointChange.header.stamp.nsecs = 0
-        safeJointChange.header.frame_id = ''
+        safe_joint_change = JointState()
+        safe_joint_change.header.seq = 0
+        safe_joint_change.header.stamp = rospy.Time.now()
+        safe_joint_change.header.frame_id = ''
 
-        safeJointChange.name = ['hand_motor_joint']
-        safeJointChange.position = [0]
-        safeJointChange.velocity = [0]
-        safeJointChange.effort = [0]
+        safe_joint_change.name = ['hand_motor_joint']
+        safe_joint_change.position = [0]
+        safe_joint_change.velocity = [0]
+        safe_joint_change.effort = [0]
 
-        safeJointChange.position = [1.0]  # this equals the gripper being open
+        safe_joint_change.position = [1.0]  # this equals the gripper being open
 
         self.client_safe_joint_change.wait_for_service()
-        out = self.client_safe_joint_change(safeJointChange)
-        self.client_safe_joint_change.wait_for_service()
+        out = self.client_safe_joint_change(safe_joint_change)
+
         return out
 
-    def _close_gripper(self):
-        effort = 0.15  # 0.1 Newton is enough for nearly everything
-        _HAND_MOMENT_ARM_LENGTH = 0.07
-
+    def _close_gripper(self, effort=0.1):
         goal = GripperApplyEffortGoal()
-        goal.effort = - effort * _HAND_MOMENT_ARM_LENGTH
+        goal.effort = -effort * HAND_MOMENT_ARM_LENGTH
         self._grasp_client.send_goal(goal)
 
-        timeout = rospy.Duration(5)
+        timeout = rospy.Duration(10)
         if self._grasp_client.wait_for_result(timeout):
             self._grasp_client.get_result()
             state = self._grasp_client.get_state()
             if state != actionlib.GoalStatus.SUCCEEDED:
+                rospy.logwarn("State is not SUCCEEDED")
                 return False
         else:
             self._grasp_client.cancel_goal()
+            rospy.logwarn("Timeout")
             return False
 
         return True
@@ -99,6 +102,6 @@ class JointTrajectory(object):
 
 if __name__ == "__main__":
     rospy.init_node('gripper_bridge')
-    joint_trajectory = JointTrajectory()
+    gripper_node = GripperNode()
 
     rospy.spin()

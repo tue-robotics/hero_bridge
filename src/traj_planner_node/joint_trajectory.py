@@ -14,7 +14,7 @@ from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction
 
 
-class JointTrajectory(object):
+class JointTrajectoryNode(object):
     def __init__(self):
 
         # server
@@ -77,7 +77,7 @@ class JointTrajectory(object):
 
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
-    joint_trajectory = JointTrajectory()
+    joint_trajectory = JointTrajectoryNode()
 
     rospy.spin()
 
