@@ -84,6 +84,7 @@ class TTS(object):
 
     def clear_buffer_srv(self, req):
         self.buffer.clear()
+        self.block_queue = False
         return []
 
     def spin(self):
