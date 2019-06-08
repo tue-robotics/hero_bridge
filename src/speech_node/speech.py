@@ -89,7 +89,7 @@ class TTS(object):
     def spin(self):
         while not rospy.is_shutdown():
 
-            rospy.loginfo(self.speech_client.simple_state)
+            # rospy.loginfo(self.speech_client.simple_state)
 
             # If the buffer is non-empty and the robot is not currently talking, send a new TTS request
             if self.buffer and not self.speech_client.simple_state == actionlib.SimpleGoalState.ACTIVE:
@@ -112,9 +112,16 @@ class TTS(object):
                     self.buffer.popleft()
                 rospy.loginfo("Buffer size [{}]: Send TTS request and removed from queue.".format(len(self.buffer)))
 
+                # If the last call is blocking then wait before setting block_queue to false, i.e. blocking until done.
+                # Might need to check code below for better alternatives to while-loop.
+                if send_req.blocking_call:
+                    while not rospy.is_shutdown() and not self.buffer and \
+                            self.speech_client.simple_state == actionlib.SimpleGoalState.ACTIVE:
+                        rospy.Rate(self.rate).sleep()
+
                 # Check if there is (still) a blocking call in the queue or if the send goal is blocking, if so the
                 # queue is blocking
-                self.block_queue = any(requests.blocking_call for requests in self.buffer) or send_req.blocking_call
+                self.block_queue = any(requests.blocking_call for requests in self.buffer)
 
             rospy.Rate(self.rate).sleep()
 
