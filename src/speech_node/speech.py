@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#'''
 #This node listens to a service call and a topic for text to speech
 #requests. These will be processed by the festival or the philips tts module.
-#'''
 
 import rospy
 import actionlib
@@ -28,11 +26,13 @@ class bcolors:
 
 
 class TTS(object):
-    """ Bridge from TTS service calls and topic messages to Toyota TTS, introducing a buffer to handle all requests in
-    receiving order """
+    """
+    Bridge from TTS service calls and topic messages to Toyota TTS, introducing a buffer to handle all requests in
+    receiving order
+    """
     def __init__(self, rate):
-        """ Constructor
-
+        """
+        Constructor
         :param rate: ROS parameter for spin-rate
         """
 
@@ -56,8 +56,8 @@ class TTS(object):
         self.speech_client.wait_for_server()
 
     def buffer_requests(self, req):
-        """ Handle requests: put them in buffer and wait if there is a blocking TTS call in the buffer
-
+        """
+        Handle requests: put them in buffer and wait if there is a blocking TTS call in the buffer
         :param req: text_to_speech.srv server message - SpeakRequest
         """
 
@@ -73,8 +73,8 @@ class TTS(object):
             self.rate.sleep()
 
     def speak(self, sentence_msg):
-        """ Receiving subscribed messages over the ~input topic
-
+        """
+        Receiving subscribed messages over the ~input topic
         :param sentence_msg: std_msgs.msg topic message - String
         """
 
@@ -87,8 +87,8 @@ class TTS(object):
         self.buffer_requests(req)
 
     def speak_srv(self, req):
-        """ Receiving service calls over the ~speak service
-
+        """
+        Receiving service calls over the ~speak service
         :param req: text_to_speech.srv server message - SpeakRequest
         """
 
@@ -96,8 +96,8 @@ class TTS(object):
         return ""
 
     def clear_buffer_srv(self, empty):
-        """ Clearing the buffer on service call and setting the (now empty) queue to non-blocking to avoid dead-lock
-
+        """
+        Clearing the buffer on service call and setting the (now empty) queue to non-blocking to avoid dead-lock
         :param empty: empty service call
         """
 
@@ -106,8 +106,10 @@ class TTS(object):
         return []
 
     def spin(self):
-        """ ROS spin-like function, should be ran after initializing the node. Sends new TTS goals to the Toyota TTS if
-        the buffer queue is non-empty and the robot isn't already talking and adjusts the buffer as necessary """
+        """
+        ROS spin-like function, should be ran after initializing the node. Sends new TTS goals to the Toyota TTS if
+        the buffer queue is non-empty and the robot isn't already talking and adjusts the buffer as necessary
+        """
 
         while not rospy.is_shutdown():
 
