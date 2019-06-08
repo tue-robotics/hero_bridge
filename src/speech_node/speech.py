@@ -82,7 +82,7 @@ class TTS(object):
         self.buffer_requests(req)
         return ""
 
-    def clear_buffer_srv(self):
+    def clear_buffer_srv(self, req):
         self.buffer.clear()
         return []
 
