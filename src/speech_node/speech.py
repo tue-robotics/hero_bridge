@@ -37,7 +37,7 @@ class TTS(object):
         """
 
         self.samples_path = rospy.get_param("~samples_path", "~/MEGA/media/audio/soundboard")
-        self.rate = rate
+        self.rate = rospy.Rate(rate)
 
         # buffer and goal state
         self.buffer = collections.deque()
@@ -70,7 +70,7 @@ class TTS(object):
 
         # Wait with returning function call if there is a blocking element in the queue
         while not rospy.is_shutdown() and self.block_queue:
-            rospy.Rate(self.rate).sleep()
+            self.rate.sleep()
 
     def speak(self, sentence_msg):
         """ Receiving subscribed messages over the ~input topic
