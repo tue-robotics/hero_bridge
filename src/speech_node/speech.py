@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#This node listens to a service call and a topic for text to speech
-#requests. These will be processed by the festival or the philips tts module.
+"""
+This node listens to a service call and a topic for text to speech
+requests. These will be processed by the festival or the philips tts module.
+"""
 
 import rospy
 import actionlib
 import collections
 
-from std_srvs.srv import Empty
+from std_srvs.srv import Empty, EmptyResponse
 from std_msgs.msg import String
 from tmc_msgs.msg import TalkRequestAction, TalkRequestGoal, Voice
 from text_to_speech.srv import Speak, SpeakRequest
@@ -33,11 +35,12 @@ class TTS(object):
     def __init__(self, rate):
         """
         Constructor
+
         :param rate: ROS parameter for spin-rate
         """
 
         self.samples_path = rospy.get_param("~samples_path", "~/MEGA/media/audio/soundboard")
-        self.rate = rate
+        self._rate = rate
 
         # buffer and goal state
         self.buffer = collections.deque()
@@ -58,7 +61,8 @@ class TTS(object):
     def buffer_requests(self, req):
         """
         Handle requests: put them in buffer and wait if there is a blocking TTS call in the buffer
-        :param req: text_to_speech.srv server message - SpeakRequest
+        :param req: server TTS request
+        :type req: SpeakRequest
         """
 
         if req.blocking_call:
@@ -75,7 +79,8 @@ class TTS(object):
     def speak(self, sentence_msg):
         """
         Receiving subscribed messages over the ~input topic
-        :param sentence_msg: std_msgs.msg topic message - String
+        :param sentence_msg: topic TTS message
+        :type sentence_msg: String
         """
 
         # Change speak topic message to same type as service call
@@ -89,7 +94,8 @@ class TTS(object):
     def speak_srv(self, req):
         """
         Receiving service calls over the ~speak service
-        :param req: text_to_speech.srv server message - SpeakRequest
+        :param req: server TTS request
+        :type req: SpeakRequest
         """
 
         self.buffer_requests(req)
@@ -103,7 +109,7 @@ class TTS(object):
 
         self.buffer.clear()
         self.block_queue = False
-        return []
+        return EmptyResponse
 
     def spin(self):
         """
