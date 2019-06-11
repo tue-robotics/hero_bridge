@@ -48,7 +48,7 @@ class TTS(object):
 
         # topics
         self.sub_speak = rospy.Subscriber("~input", String, self.speak)
-        # self.pub_speak = rospy.Publisher("/talk_request", Voice, queue_size=10)
+        self.pub_sentence = rospy.Publisher('~output', String, queue_size=10)
 
         # services
         self.srv_speak = rospy.Service('~speak', Speak, self.speak_srv)
@@ -148,6 +148,9 @@ class TTS(object):
                 out.language = 1
                 out.sentence = self._active_req.sentence
                 goal.data = out
+
+                # Publish what the robot is going to say
+                self.pub_sentence.publish(self._active_req.sentence)
 
                 # Send the left-most queue entry to Toyota TTS over the simple_action_client
                 self.speech_client.send_goal(goal, done_cb=self._done_cb())
