@@ -41,10 +41,10 @@ class TTS(object):
 
         self.samples_path = rospy.get_param("~samples_path", "~/MEGA/media/audio/soundboard")
         self._rate = rate
+        self._active_req = None
 
         # buffer and goal state
         self.buffer = collections.deque()
-        self.block_queue = False
 
         # topics
         self.sub_speak = rospy.Subscriber("~input", String, self.speak)
@@ -58,6 +58,18 @@ class TTS(object):
         self.speech_client = actionlib.SimpleActionClient('/talk_request_action', TalkRequestAction)
         self.speech_client.wait_for_server()
 
+    @property
+    def block_queue(self):
+        """
+        Property which checks whether the active request or remaining queue is blocking
+        :return: Boolean
+        """
+        # First check if self._active_req is not None and if not, if it is blocking
+        active_req_blocking = self._active_req is not None and self._active_req.blocking
+
+        # Also check if there is still a blocking call in the remaining queue
+        return active_req_blocking or any(requests.blocking_call for requests in self.buffer)
+
     def buffer_requests(self, req):
         """
         Handle requests: put them in buffer and wait if there is a blocking TTS call in the buffer
@@ -65,16 +77,14 @@ class TTS(object):
         :type req: SpeakRequest
         """
 
-        if req.blocking_call:
-            self.block_queue = True
-
         # Extend the buffer queue on the right
         self.buffer.append(req)
         rospy.logdebug("Buffer size [{}]: Added the TTS request to the queue.".format(len(self.buffer)))
 
         # Wait with returning function call if there is a blocking element in the queue
+        rate = rospy.Rate(self._rate)
         while not rospy.is_shutdown() and self.block_queue:
-            rospy.Rate(self.rate).sleep()
+            rate.sleep()
 
     def speak(self, sentence_msg):
         """
@@ -86,8 +96,6 @@ class TTS(object):
         # Change speak topic message to same type as service call
         req = SpeakRequest()
         req.sentence = sentence_msg.data
-
-        # req.blocking_call = False  # False by default
 
         self.buffer_requests(req)
 
@@ -108,8 +116,13 @@ class TTS(object):
         """
 
         self.buffer.clear()
-        self.block_queue = False
         return EmptyResponse
+
+    def _done_cb(self):
+        """
+        Function which is called back if the speech client is done with the TTS of the active request
+        """
+        self._active_req = None
 
     def spin(self):
         """
@@ -117,14 +130,15 @@ class TTS(object):
         the buffer queue is non-empty and the robot isn't already talking and adjusts the buffer as necessary
         """
 
+        rate = rospy.Rate(self._rate)
         while not rospy.is_shutdown():
 
             # Print the talking state of the robot (PENDING = 0, TALKING = 1, DONE = 2) to the ROS debugging level
             rospy.logdebug(self.speech_client.simple_state)
 
             # If the buffer is non-empty and the robot is not currently talking, send a new TTS request
-            if self.buffer and not self.speech_client.simple_state == actionlib.SimpleGoalState.ACTIVE:
-                send_req = self.buffer[0]
+            if self.buffer and self._active_req is None:
+                self._active_req = self.buffer[0]
 
                 # Bridge between the req object and simple_action_client goal object
                 goal = TalkRequestGoal()
@@ -132,29 +146,18 @@ class TTS(object):
                 out.interrupting = False
                 out.queueing = True
                 out.language = 1
-                out.sentence = send_req.sentence
+                out.sentence = self._active_req.sentence
                 goal.data = out
 
                 # Send the left-most queue entry to Toyota TTS over the simple_action_client
-                self.speech_client.send_goal(goal)
+                self.speech_client.send_goal(goal, done_cb=self._done_cb())
 
                 # Pop left-most queue entry
                 if self.buffer:
                     self.buffer.popleft()
                 rospy.logdebug("Buffer size [{}]: Send TTS request and removed from queue.".format(len(self.buffer)))
 
-                # If the last call is blocking then wait before setting block_queue to false, i.e. blocking until done.
-                # Might need to check code below for better alternatives to while-loop.
-                if send_req.blocking_call:
-                    while not rospy.is_shutdown() and not self.buffer and \
-                            self.speech_client.simple_state == actionlib.SimpleGoalState.ACTIVE:
-                        rospy.Rate(self.rate).sleep()
-
-                # Check if there is (still) a blocking call in the queue or if the send goal is blocking, if so the
-                # queue is blocking
-                self.block_queue = any(requests.blocking_call for requests in self.buffer)
-
-            rospy.Rate(self.rate).sleep()
+            rate.sleep()
 
 
 if __name__ == "__main__":
