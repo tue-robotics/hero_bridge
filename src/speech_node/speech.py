@@ -153,7 +153,7 @@ class TTS(object):
                 self.pub_sentence.publish(self._active_req.sentence)
 
                 # Send the left-most queue entry to Toyota TTS over the simple_action_client
-                self.speech_client.send_goal(goal, done_cb=self._done_cb())
+                self.speech_client.send_goal(goal, done_cb=self._done_cb)
 
                 # Pop left-most queue entry
                 if self.buffer:
