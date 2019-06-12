@@ -116,7 +116,7 @@ class TTS(object):
         """
 
         self.buffer.clear()
-        return EmptyResponse
+        return EmptyResponse()
 
     def _done_cb(self, empty1, empty2):
         """
