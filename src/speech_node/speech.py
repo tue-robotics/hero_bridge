@@ -118,7 +118,7 @@ class TTS(object):
         self.buffer.clear()
         return EmptyResponse
 
-    def _done_cb(self):
+    def _done_cb(self, empty1, empty2):
         """
         Function which is called back if the speech client is done with the TTS of the active request
         """
