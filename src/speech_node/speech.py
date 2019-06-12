@@ -65,7 +65,7 @@ class TTS(object):
         :return: Boolean
         """
         # First check if self._active_req is not None and if not, if it is blocking
-        active_req_blocking = self._active_req is not None and self._active_req.blocking
+        active_req_blocking = self._active_req is not None and self._active_req.blocking_call
 
         # Also check if there is still a blocking call in the remaining queue
         return active_req_blocking or any(requests.blocking_call for requests in self.buffer)
