@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # '''
-# This node listens to a service call for a joint trajectory planner.
-# These will be bridged to the Toyota safe pose changer.
+# This node listens to a reference topic
+# These will be bridged to a command controller
 # '''
 
 import rospy
 
-from tmc_manipulation_msgs.srv import SafeJointChange
+# from tmc_manipulation_msgs.srv import SafeJointChange
 from sensor_msgs.msg import JointState
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 
 class HeadBridge(object):
@@ -20,35 +21,33 @@ class HeadBridge(object):
         self.prev_data.position = [0.0, 0.0]
 
         # topics
-        self.sub_refs = rospy.Subscriber("neck/references", JointState, self.callback)
-
-        # clients
-        self.client_safe_joint_change = rospy.ServiceProxy('safe_pose_changer/change_joint', SafeJointChange)
+        self.sub_neck_ref = rospy.Subscriber('neck/references', JointState, self.callback)
+        self.pub_neck_ref = rospy.Publisher('head_trajectory_controller/command', JointTrajectory, queue_size=1)
 
     def callback(self, data):
         self.data.position = data.position
 
     def process_references(self):
-        # rospy.loginfo("current:  {}".format(self.data.position))
-        # rospy.loginfo("previous: {}".format(self.prev_data.position))
         if self.reference_changed(self.data):
             self.prev_data.position = self.data.position
-            safeJointChange = JointState()
-            safeJointChange.header.seq = 0
-            safeJointChange.header.stamp.secs = 0
-            safeJointChange.header.stamp.nsecs = 0
-            safeJointChange.header.frame_id = ''
 
-            safeJointChange.name = ['head_pan_joint', 'head_tilt_joint']
+            jointChange = JointTrajectory()
+
             position = [self.data.position[0], self.data.position[1]]
-
             position[0] = min(max(position[0], -3.84), 1.75)
             position[1] = min(max(position[1], -1.57), 0.52)
-            safeJointChange.position = position
-            safeJointChange.velocity = [0, 0]
-            safeJointChange.effort = [0, 0]
-            self.client_safe_joint_change.wait_for_service()
-            self.client_safe_joint_change(safeJointChange)
+
+            goal_point = JointTrajectoryPoint()
+            goal_point.positions = position
+            goal_point.velocities = [0, 0]
+            goal_point.accelerations = [0, 0]
+            goal_point.effort = [0, 0]
+            goal_point.time_from_start = rospy.Time.now()
+
+            jointChange.header = self.data.header
+            jointChange.joint_names = ['head_pan_joint', 'head_tilt_joint']
+            jointChange.points.append(goal_point)
+            self.pub_neck_ref.publish(jointChange)
 
             rospy.loginfo('Head bridge: Succeeded')
 
