@@ -81,6 +81,12 @@ class GripperNode(object):
         return out
 
     def _close_gripper(self, effort=0.1):
+        """
+
+        :param effort: (float) Force applied to grasping[N], should be a positive number
+        :return: (bool) stating the goalstatus of the Actionlib
+        """
+
         goal = GripperApplyEffortGoal()
         goal.effort = -effort * HAND_MOMENT_ARM_LENGTH
         self._grasp_client.send_goal(goal)
