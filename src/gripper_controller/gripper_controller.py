@@ -54,8 +54,8 @@ class GripperNode(object):
         if goal.command.direction is goal.command.OPEN:
             return self._open_gripper()
         elif goal.command.direction is goal.command.CLOSE:
-            if goal.command.max_torque > 0:
-                return self._close_gripper(goal.command.max_torque)
+            if goal.command.max_force > 0:
+                return self._close_gripper(goal.command.max_force)
             else:
                 return self._close_gripper()
         else:
