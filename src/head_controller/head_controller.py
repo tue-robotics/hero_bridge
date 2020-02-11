@@ -40,9 +40,9 @@ class HeadBridge(object):
             safeJointChange.header.frame_id = ''
 
             safeJointChange.name = ['head_pan_joint', 'head_tilt_joint']
-            position = [self.data.position[0], -self.data.position[1]]
+            position = [self.data.position[0], self.data.position[1]]
 
-            position[0] = min(max(position[0], -3.84), 1.57)
+            position[0] = min(max(position[0], -3.84), 1.75)
             position[1] = min(max(position[1], -1.57), 0.52)
             safeJointChange.position = position
             safeJointChange.velocity = [0, 0]
