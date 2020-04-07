@@ -53,8 +53,8 @@ class HeadBridge(object):
             rospy.loginfo('Head bridge: Succeeded')
 
     def reference_changed(self, data):
-            return not (abs(data.position[0] - self.prev_data.position[0]) < 0.05 and
-                        abs(data.position[1] - self.prev_data.position[1]) < 0.05)
+        return not (abs(data.position[0] - self.prev_data.position[0]) < 0.05 and
+                    abs(data.position[1] - self.prev_data.position[1]) < 0.05)
 
 
 if __name__ == "__main__":
