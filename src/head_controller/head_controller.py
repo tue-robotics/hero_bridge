@@ -62,6 +62,9 @@ if __name__ == "__main__":
     head_bridge = HeadBridge()
     r = rospy.Rate(25)
 
-    while not rospy.is_shutdown():
-        head_bridge.process_references()
-        r.sleep()
+    try:
+        while not rospy.is_shutdown():
+            head_bridge.process_references()
+            r.sleep()
+    except rospy.ROSInterruptException:
+        pass
