@@ -5,7 +5,7 @@
 
     <node pkg="hero_bridge" type="manipulation_bridge.py" name="manipulation_bridge" >
         <remap from="/hsrb/joint_states" to="joint_states" />
-        <remap from="/hsrb/arm_trajectory_controller/follow_joint_trajectory/" to="body/joint_trajectory_action" />
+        <remap from="/hsrb/arm_trajectory_controller/follow_joint_trajectory/" to="/hero/arm_trajectory_controller/follow_joint_trajectory" />
         <remap from="/hsrb/arm_trajectory_controller/joints" to="arm_trajectory_controller/joints" />
         <remap from="/hsrb/head_trajectory_controller/follow_joint_trajectory/" to="head_trajectory_controller/follow_joint_trajectory" />
         <remap from="/hsrb/head_trajectory_controller/joints" to="head_trajectory_controller/joints" />
