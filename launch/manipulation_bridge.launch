@@ -15,6 +15,7 @@
         <remap from="/hsrb/omni_base_controller/base_coordinates" to="omni_base_controller/base_coordinates" />
         <remap from="/hsrb/impedance_control/follow_joint_trajectory/" to="impedance_control/follow_joint_trajectory" />
         <remap from="/hsrb/impedance_control/joint_names" to="impedance_control/joint_names" />
+        <remap from="/trajectory_filter/filter_trajectory_with_constraints" to="trajectory_filter/filter_trajectory_with_constraints" />
         <remap from="/plan_with_constraints" to="plan_with_constraints"/>
         <remap from="/plan_with_hand_goals" to="plan_with_hand_goals"/>
         <remap from="/plan_with_hand_line" to="plan_with_hand_line"/>

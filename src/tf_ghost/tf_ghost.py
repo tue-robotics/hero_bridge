@@ -17,18 +17,18 @@ class Ghost(object):
         self.broadcaster = tf.TransformBroadcaster()
 
     def create_ghosts(self):
-        # self.add_prefix("base_link")
+        self.add_prefix("base_link")
 
-        self.remap_frame(self.prefix + "/head_tilt_link", self.prefix + "/neck_tilt")
-        self.remap_frame(self.prefix + "/head_rgbd_sensor_gazebo_frame", self.prefix + "/top_kinect/openni_camera")
-        self.remap_frame(self.prefix + "/base_range_sensor_link", self.prefix + "/base_laser")
+        self.remap_frame("head_tilt_link", "/" + self.prefix + "/neck_tilt")
+        self.remap_frame("head_rgbd_sensor_gazebo_frame", "/" + self.prefix + "/top_kinect/openni_camera")
+        self.remap_frame("base_range_sensor_link", "/" + self.prefix + "/base_laser")
         
         self.broadcaster.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(3.14159265, -1.570796325, 0),
-                                       rospy.Time.now(), "/" + self.prefix + "/grippoint_left", self.prefix + "/hand_palm_link")
+                                       rospy.Time.now(), "/" + self.prefix + "/grippoint_left", "hand_palm_link")
         self.broadcaster.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(3.14159265, -1.570796325, 0),
-                                       rospy.Time.now(), "/" + self.prefix + "/grippoint_right", self.prefix + "/hand_palm_link")
+                                       rospy.Time.now(), "/" + self.prefix + "/grippoint_right", "hand_palm_link")
         self.broadcaster.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(3.14159265, -1.570796325, 0),
-                                       rospy.Time.now(), "/" + self.prefix + "/head_mount", self.prefix + "/torso_lift_link")
+                                       rospy.Time.now(), "/" + self.prefix + "/head_mount", "torso_lift_link")
 
     def add_prefix(self, frame):
         ghost_frame = "/" + self.prefix + "/" + frame
