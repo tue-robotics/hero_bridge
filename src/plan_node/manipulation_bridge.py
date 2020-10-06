@@ -15,7 +15,7 @@ from tue_manipulation_msgs.msg import GraspPrecomputeAction
 from tmc_manipulation_msgs.msg import BaseMovementType, ArmManipulationErrorCodes
 
 # Preparation to use robot functions
-from hsrb_interface import Robot, settings, geometry
+from hsrb_interface import Robot, settings, geometry, trajectory
 
 
 class ManipulationBridge(object):
@@ -97,6 +97,12 @@ class ManipulationBridge(object):
 
 if __name__ == "__main__":
     rospy.init_node('manipulation_bridge')
+
+    # hsrb_interface can't handle prefix added by other toyota software
+    settings._SETTINGS['frame']['odom']['frame_id'] = 'hero/odom'
+    settings._SETTINGS['frame']['base']['frame_id'] = 'hero/base_footprint'
+    trajectory._BASE_TRAJECTORY_ORIGIN = 'hero/odom'
+
     manipulation_bridge = ManipulationBridge()
 
     rospy.spin()
