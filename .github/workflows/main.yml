@@ -12,3 +12,4 @@ jobs:
         with:
           package: ${{ github.event.repository.name }}
           ssh-key: ${{ secrets.SSH_DEPLOY_KEY }}
+          ssh-known-hosts: github.com gitlab.com
