@@ -1,2 +1,3 @@
 # hero_bridge
-[![Build Status](https://travis-ci.com/tue-robotics/hero_bridge.svg?branch=master)](https://travis-ci.com/tue-robotics/hero_bridge)
+
+[![CI](https://github.com/tue-robotics/hero_bridge/workflows/CI/badge.svg)](https://github.com/tue-robotics/hero_bridge/actions)
