@@ -10,16 +10,11 @@ import rospy
 import actionlib
 
 from tmc_manipulation_msgs.srv import SafeJointChange
-from tmc_planning_msgs.srv import PlanWithJointGoals
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction
-import hsrb_interface
-import sys
 
-reload(sys)
-sys.setdefaultencoding('utf8')
 
-class JointTrajectory(object):
+class JointTrajectoryNode(object):
     def __init__(self):
         rospy.logdebug("Getting robot")
         self._robot = hsrb_interface.Robot()
@@ -27,7 +22,7 @@ class JointTrajectory(object):
         rospy.logdebug("Got whole_body")
 
         # server
-        self.srv_safe_joint_change = actionlib.SimpleActionServer('/hero/body/joint_trajectory_action',
+        self.srv_safe_joint_change = actionlib.SimpleActionServer('body/joint_trajectory_action',
                                                                   FollowJointTrajectoryAction,
                                                                   execute_cb=self.moveit_joint_change_action,
                                                                   auto_start=False)
@@ -78,8 +73,9 @@ class JointTrajectory(object):
 
         rospy.logdebug("moveit_joint_change_action finished")
 
+
 if __name__ == "__main__":
     rospy.init_node('joint_trajectory_action')
-    joint_trajectory = JointTrajectory()
+    joint_trajectory = JointTrajectoryNode()
 
     rospy.spin()

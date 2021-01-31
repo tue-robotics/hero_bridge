@@ -10,8 +10,8 @@ from tmc_rosjulius_msgs.msg import RecognitionResult
 
 from std_srvs.srv import Empty
 
-class HMIServerJuliusClient(AbstractHMIServer):
 
+class HMIServerJuliusClient(AbstractHMIServer):
     def __init__(self):
         """
         JuliusHMIServer that exposes the HMI ROS Server and holds a socket client that talks to the julius
@@ -23,7 +23,6 @@ class HMIServerJuliusClient(AbstractHMIServer):
         self.stop_listen_client = rospy.ServiceProxy('/hsrb/voice/stop_recognition', Empty)
 
         self.restart_server = rospy.Service('~restart_node', Empty, self.restart_node)
-
 
     def _determine_answer(self, description, grammar, target, is_preempt_requested):
         grammar_parser = CFGParser.fromstring(grammar)
@@ -56,10 +55,11 @@ class HMIServerJuliusClient(AbstractHMIServer):
 
         return HMIResult(sentence, semantics)
 
-
-    def restart_node(self, data):
+    @staticmethod
+    def restart_node(data):
         rospy.loginfo('sending the restart command to windows')
         return {}
+
 
 if __name__ == "__main__":
     rospy.init_node('hmi_server_julius_client')
