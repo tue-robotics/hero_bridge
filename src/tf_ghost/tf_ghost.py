@@ -22,10 +22,6 @@ class Ghost(object):
         self.remap_frame(self.prefix + "/" + "base_range_sensor_link", self.prefix + "/base_laser")
 
         self.broadcaster.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(3.14159265, -1.570796325, 0),
-                                       rospy.Time.now(), self.prefix + "/grippoint_left", self.prefix + "/" + "hand_palm_link")
-        self.broadcaster.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(3.14159265, -1.570796325, 0),
-                                       rospy.Time.now(), self.prefix + "/grippoint_right", self.prefix + "/" + "hand_palm_link")
-        self.broadcaster.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(3.14159265, -1.570796325, 0),
                                        rospy.Time.now(), self.prefix + "/head_mount", self.prefix + "/" + "torso_lift_link")
 
     def add_prefix(self, frame):
