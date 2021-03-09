@@ -26,17 +26,17 @@ class ManipulationBridge(object):
         self.whole_body = self.robot.try_get('whole_body')
 
         # server
-        self.srv_manipulation_left = actionlib.SimpleActionServer('arm_left/grasp_precompute',
+        self.srv_manipulation = actionlib.SimpleActionServer('arm_center/grasp_precompute',
                                                                   GraspPrecomputeAction,
-                                                                  execute_cb=self.manipulation_srv_left,
+                                                                  execute_cb=self.manipulation_srv_inst,
                                                                   auto_start=False)
-        self.srv_manipulation_left.start()
+        self.srv_manipulation.start()
 
-    def manipulation_srv_left(self, action):
+    def manipulation_srv_inst(self, action):
         success = self.manipulation_srv(action)
         if success:
             rospy.loginfo('Manipulation bridge: Succeeded')
-            self.srv_manipulation_left.set_succeeded()
+            self.srv_manipulation.set_succeeded()
 
     def manipulation_srv(self, action):
         """
