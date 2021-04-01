@@ -14,6 +14,7 @@ class Ghost(object):
         self.broadcaster = tf2_ros.StaticTransformBroadcaster()
 
     def create_ghosts(self):
+        self.add_prefix("base_link")
         self.remap_frame("head_tilt_link", "neck_tilt")
         self.remap_frame("head_rgbd_sensor_gazebo_frame", "top_kinect/openni_camera")
         self.remap_frame("base_range_sensor_link", self.prefix + "/base_laser")
