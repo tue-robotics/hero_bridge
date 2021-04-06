@@ -20,7 +20,7 @@ class GripperNode(object):
         self.success = True
 
         # server
-        self.srv_safe_joint_change = actionlib.SimpleActionServer('/hero/gripper/action',
+        self.srv_safe_joint_change = actionlib.SimpleActionServer('gripper/action',
                                                                    GripperCommandAction,
                                                                    execute_cb=self.gripper,
                                                                    auto_start=False)
