@@ -20,30 +20,20 @@ class GripperNode(object):
         self.success = True
 
         # server
-        self.srv_safe_joint_change_left = actionlib.SimpleActionServer('left_arm/gripper/action',
-                                                                       GripperCommandAction,
-                                                                       execute_cb=self.gripper_left,
-                                                                       auto_start=False)
-        self.srv_safe_joint_change_right = actionlib.SimpleActionServer('right_arm/gripper/action',
-                                                                        GripperCommandAction,
-                                                                        execute_cb=self.gripper_right,
-                                                                        auto_start=False)
-        self.srv_safe_joint_change_left.start()
-        self.srv_safe_joint_change_right.start()
+        self.srv_safe_joint_change = actionlib.SimpleActionServer('/hero/gripper/action',
+                                                                   GripperCommandAction,
+                                                                   execute_cb=self.gripper,
+                                                                   auto_start=False)
+        self.srv_safe_joint_change.start()
 
         # clients
         self.client_safe_joint_change = rospy.ServiceProxy('safe_pose_changer/change_joint', SafeJointChange)
         self._grasp_client = actionlib.SimpleActionClient('gripper_controller/grasp', GripperApplyEffortAction)
 
-    def gripper_left(self, goal):
+    def gripper(self, goal):
         self.success = self.safe_joint_change_srv(goal)
         if self.success:
-            self.srv_safe_joint_change_left.set_succeeded()
-
-    def gripper_right(self, goal):
-        self.success = self.safe_joint_change_srv(goal)
-        if self.success:
-            self.srv_safe_joint_change_right.set_succeeded()
+            self.srv_safe_joint_change.set_succeeded()
 
     def safe_joint_change_srv(self, goal):
         """
