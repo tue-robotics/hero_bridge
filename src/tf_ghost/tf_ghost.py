@@ -11,7 +11,7 @@ import tf2_ros
 class Ghost(object):
     def __init__(self):
         self.prefix = "hero"
-        self.broadcaster = tf2_ros.StaticTransformBroadcaster()
+        self.broadcaster = tf2_ros.TransformBroadcaster()
 
     def create_ghosts(self):
         self.add_prefix("base_link")
@@ -55,9 +55,11 @@ class Ghost(object):
 
 if __name__ == "__main__":
     rospy.init_node('tf_ghost_publisher')
+    rate = rospy.Rate(50)
     try:
         ghost = Ghost()
-        ghost.create_ghosts()
-        rospy.spin()
+        while not rospy.is_shutdown():
+            ghost.create_ghosts()
+            rate.sleep()
     except rospy.ROSInterruptException:
         pass
