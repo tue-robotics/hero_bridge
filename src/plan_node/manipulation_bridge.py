@@ -46,9 +46,7 @@ class ManipulationBridge(object):
         success = True
 
         pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
-        static_quaternion = quaternion_from_euler(3.14159265359, -1.57079632679, 0)
-        final_quaternion = quaternion_multiply(pose_quaternion, static_quaternion)
-        pose = [action.goal.x, action.goal.y, action.goal.z], final_quaternion
+        pose = [action.goal.x, action.goal.y, action.goal.z], pose_quaternion
 
         ################################################################################################################
         # This piece of code is partially copied from Toyota software, it also uses the private functions (we're very
