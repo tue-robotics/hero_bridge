@@ -18,7 +18,8 @@ class Ghost(object):
         self.remap_frame("head_tilt_link", "neck_tilt")
         self.remap_frame("head_rgbd_sensor_gazebo_frame", "top_kinect/openni_camera")
         self.remap_frame("base_range_sensor_link", self.prefix + "/base_laser")
-
+        self.sendTransform((0, 0, 0), tf_conversions.transformations.quaternion_from_euler(pi, -pi/2, 0),
+                           rospy.Time.now(), "grippoint", "hand_palm_link")
         self.sendTransform((0, 0, 0), tf_conversions.transformations.quaternion_from_euler(pi, -pi/2, 0),
                            rospy.Time.now(), "head_mount", "torso_lift_link")
 
