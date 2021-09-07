@@ -9,7 +9,7 @@ from geometry_msgs.msg import WrenchStamped
 
 
 class HandoverDetector(object):
-    def __init__(self, side):
+    def __init__(self, name):
         self.force_threshold = 5
         self.timeout = 10
 
@@ -28,7 +28,7 @@ class HandoverDetector(object):
                                         Bool, self.detect_handover)
         self.sub_wrist_wrench = rospy.Subscriber("wrist_wrench/raw", WrenchStamped, self.update_forces)
 
-        self.pub_result = rospy.Publisher("handover_detector/result", Bool, queue_size=1)
+        self.pub_result = rospy.Publisher("handover_detector_{}/result".format(name), Bool, queue_size=1)
 
     def detect_handover(self, data):
         if data.data:
@@ -65,7 +65,5 @@ class HandoverDetector(object):
 
 if __name__ == "__main__":
     rospy.init_node('hand_over_detector')
-    handover_detection_l = HandoverDetector("left")
-    handover_detection_r = HandoverDetector("right")
-
+    handover_detection = HandoverDetector("center")
     rospy.spin()
