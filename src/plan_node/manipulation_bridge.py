@@ -27,9 +27,9 @@ class ManipulationBridge(object):
 
         # server
         self.srv_manipulation = actionlib.SimpleActionServer('arm_center/grasp_precompute',
-                                                                  GraspPrecomputeAction,
-                                                                  execute_cb=self.manipulation_srv_inst,
-                                                                  auto_start=False)
+                                                             GraspPrecomputeAction,
+                                                             execute_cb=self.manipulation_srv_inst,
+                                                             auto_start=False)
         self.srv_manipulation.start()
 
     def manipulation_srv_inst(self, action):
@@ -45,16 +45,17 @@ class ManipulationBridge(object):
         """
         success = True
 
-        pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
-        pose = [action.goal.x, action.goal.y, action.goal.z], pose_quaternion
+        ref_to_hand_poses = []
+        for goal in action.goals:
+            pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
+            pose = [action.goal.x, action.goal.y, action.goal.z], pose_quaternion
+            ref_to_hand_poses.append(pose)
 
         ################################################################################################################
         # This piece of code is partially copied from Toyota software, it also uses the private functions (we're very
         # sorry). Setting base_movement_type.val allows for adapting the allowed movements during manipulation.
 
         ref_frame_id = settings.get_frame('base')
-
-        ref_to_hand_poses = [pose]
 
         odom_to_ref_pose = self.whole_body._lookup_odom_to_ref(ref_frame_id)
         odom_to_ref = geometry.pose_to_tuples(odom_to_ref_pose)
