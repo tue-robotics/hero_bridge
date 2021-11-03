@@ -11,7 +11,8 @@ import tf2_ros
 class Ghost(object):
     def __init__(self):
         self.prefix = "hero"
-        self.broadcaster = tf2_ros.TransformBroadcaster()
+        self.broadcaster = tf2_ros.StaticTransformBroadcaster()
+        self.transforms = []
 
     def create_ghosts(self):
         self.add_prefix("base_link")
@@ -19,7 +20,7 @@ class Ghost(object):
         self.remap_frame("head_rgbd_sensor_gazebo_frame", "top_kinect/openni_camera")
         self.remap_frame("base_range_sensor_link", self.prefix + "/base_laser")
 
-        self.sendTransform((0, 0, 0), tf_conversions.transformations.quaternion_from_euler(pi, -pi/2, 0),
+        self.add_transform((0, 0, 0), tf_conversions.transformations.quaternion_from_euler(pi, -pi/2, 0),
                            rospy.Time.now(), "head_mount", "torso_lift_link")
 
     def add_prefix(self, frame):
@@ -28,9 +29,9 @@ class Ghost(object):
 
     def remap_frame(self, frame, ghost_frame):
         quat = tf_conversions.transformations.quaternion_from_euler(0, 0, 0)
-        self.sendTransform((0, 0, 0), quat, rospy.Time.now(), ghost_frame, frame)
+        self.add_transform((0, 0, 0), quat, rospy.Time.now(), ghost_frame, frame)
 
-    def sendTransform(self, translation, rotation, time, child, parent):
+    def add_transform(self, translation, rotation, time, child, parent):
         transform = TransformStamped()
 
         transform.header.stamp = time
@@ -46,16 +47,16 @@ class Ghost(object):
         transform.transform.rotation.z = rotation[2]
         transform.transform.rotation.w = rotation[3]
 
-        self.broadcaster.sendTransform(transform)
+        self.transforms.append(transform)
+
+    def publish_transforms(self):
+        self.broadcaster.sendTransform(self.transforms)
 
 
 if __name__ == "__main__":
     rospy.init_node('tf_ghost_publisher')
-    rate = rospy.Rate(50)
-    try:
-        ghost = Ghost()
-        while not rospy.is_shutdown():
-            ghost.create_ghosts()
-            rate.sleep()
-    except rospy.ROSInterruptException:
-        pass
+
+    ghost = Ghost()
+    ghost.create_ghosts()
+    ghost.publish_transforms()
+    rospy.spin()
