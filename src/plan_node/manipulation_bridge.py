@@ -9,8 +9,13 @@
 import rospy
 import actionlib
 
-from tf.transformations import quaternion_from_euler, quaternion_multiply
-from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
+from moveit_msgs.msg import CollisionObject, PlanningSceneWorld
+from shape_msgs.msg import Mesh, MeshTriangle
+from std_srvs.srv import Empty
+from tf.transformations import quaternion_from_euler
+from tmc_geometric_shapes_msgs.msg import Shape
+from tmc_manipulation_msgs.msg import CollisionObject as CollisionObjectTMC, CollisionEnvironment
+from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest, PlanWithHandGoalsResponse
 from tue_manipulation_msgs.msg import GraspPrecomputeAction
 from tmc_manipulation_msgs.msg import BaseMovementType, ArmManipulationErrorCodes
 
@@ -27,10 +32,15 @@ class ManipulationBridge(object):
 
         # server
         self.srv_manipulation = actionlib.SimpleActionServer('arm_center/grasp_precompute',
-                                                                  GraspPrecomputeAction,
-                                                                  execute_cb=self.manipulation_srv_inst,
-                                                                  auto_start=False)
+                                                              GraspPrecomputeAction,
+                                                              execute_cb=self.manipulation_srv_inst,
+                                                              auto_start=False)
         self.srv_manipulation.start()
+
+        self.srv_proxy_moveit_scene = rospy.ServiceProxy('ed/moveit_scene', Empty)
+        self.sub_moveit_scene = rospy.Subscriber('planning_scene_world', PlanningSceneWorld, self.planning_scene_cb,
+                                                 queue_size=1)
+        self._collision_environment = None
 
     def manipulation_srv_inst(self, action):
         success = self.manipulation_srv(action)
@@ -67,19 +77,50 @@ class ManipulationBridge(object):
         req.origin_to_hand_goals = odom_to_hand_poses
         req.ref_frame_id = self.whole_body._end_effector_frame
         req.base_movement_type.val = BaseMovementType.ROTATION_Z
+        if self.srv_proxy_moveit_scene() and self._collision_environment:
+            req.environment_before_planning = self._collision_environment
 
+        rospy.loginfo(req.environment_before_planning)
         service_name = self.whole_body._setting['plan_with_hand_goals_service']
         plan_service = rospy.ServiceProxy(service_name, PlanWithHandGoals)
-        res = plan_service.call(req)
+        res = plan_service.call(req)  # type: PlanWithHandGoalsResponse
         if res.error_code.val != ArmManipulationErrorCodes.SUCCESS:
             rospy.logerr('Fail to plan move_endpoint')
             success = False
         else:
+            rospy.loginfo(res.environment_after_planning)
             res.base_solution.header.frame_id = settings.get_frame('odom')
             constrained_traj = self.whole_body._constrain_trajectories(res.solution, res.base_solution)
             self.whole_body._execute_trajectory(constrained_traj)
 
         return success
+
+    def planning_scene_cb(self, msg: PlanningSceneWorld) -> None:
+        self._collision_environment = None
+        tmc_world = CollisionEnvironment()
+        tmc_world.header.frame_id = 'map'
+        tmc_world.header.stamp = rospy.Time.now()
+        object_id = 1
+        for coll_object in msg.collision_objects:  # type: CollisionObject
+            tmc_coll_object = CollisionObjectTMC()
+
+            tmc_coll_object.header = coll_object.header
+            tmc_coll_object.id.name = coll_object.id
+            # tmc_coll_object.id.object_id = object_id  # Ca
+            # object_id += 1
+            tmc_coll_object.poses = coll_object.mesh_poses
+
+            for mesh in coll_object.meshes:  # type: Mesh
+                tmc_shape = Shape()
+                tmc_shape.vertices = mesh.vertices
+                for triangle in mesh.triangles:  # type: MeshTriangle
+                    tmc_shape.triangles.extend(triangle.vertex_indices)
+
+                tmc_coll_object.shapes.append(tmc_shape)
+
+            tmc_world.known_objects.append(tmc_coll_object)
+
+        self._collision_environment = tmc_coll_object
 
 
 if __name__ == "__main__":
