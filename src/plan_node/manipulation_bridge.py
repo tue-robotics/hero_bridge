@@ -11,7 +11,7 @@ import actionlib
 
 from moveit_msgs.msg import CollisionObject, PlanningSceneWorld
 from shape_msgs.msg import Mesh, MeshTriangle
-from std_srvs.srv import Empty
+from std_srvs.srv import Trigger
 from tf.transformations import quaternion_from_euler
 from tmc_geometric_shapes_msgs.msg import Shape
 from tmc_manipulation_msgs.msg import CollisionObject as CollisionObjectTMC, CollisionEnvironment
@@ -37,7 +37,7 @@ class ManipulationBridge(object):
                                                               auto_start=False)
         self.srv_manipulation.start()
 
-        self.srv_proxy_moveit_scene = rospy.ServiceProxy('ed/moveit_scene', Empty)
+        self.srv_proxy_moveit_scene = rospy.ServiceProxy('ed/moveit_scene', Trigger)
         self.sub_moveit_scene = rospy.Subscriber('planning_scene_world', PlanningSceneWorld, self.planning_scene_cb,
                                                  queue_size=1)
         self._collision_environment = None
