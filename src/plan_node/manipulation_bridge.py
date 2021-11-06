@@ -120,7 +120,7 @@ class ManipulationBridge(object):
 
             tmc_world.known_objects.append(tmc_coll_object)
 
-        self._collision_environment = tmc_coll_object
+        self._collision_environment = tmc_world
 
 
 if __name__ == "__main__":
