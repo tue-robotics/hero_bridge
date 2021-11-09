@@ -106,8 +106,8 @@ class ManipulationBridge(object):
 
             tmc_coll_object.header = coll_object.header
             tmc_coll_object.id.name = coll_object.id
-            # tmc_coll_object.id.object_id = object_id  # Ca
-            # object_id += 1
+            tmc_coll_object.id.object_id = object_id
+            object_id += 1
             tmc_coll_object.poses = coll_object.mesh_poses
 
             for mesh in coll_object.meshes:  # type: Mesh
