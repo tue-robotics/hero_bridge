@@ -14,7 +14,7 @@ from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
 
 from std_srvs.srv import Trigger
 from tue_manipulation_msgs.msg import GraspPrecomputeAction
-import geometry_msgs.msg
+from geometry_msgs.msg import PoseStamped, Point, Pose
 from tmc_manipulation_msgs.msg import BaseMovementType, ArmManipulationErrorCodes
 
 # Preparation to use robot functions
@@ -24,11 +24,6 @@ import sys
 
 class ManipulationBridge(object):
     def __init__(self):
-        # robot
-        # self.robot = Robot()
-        # self.whole_body = self.robot.try_get('whole_body')
-        #TODO(Lars): look at namespacing
-
         # server
         self.srv_manipulation = actionlib.SimpleActionServer('arm_center/grasp_precompute',
                                                              GraspPrecomputeAction,
@@ -36,13 +31,12 @@ class ManipulationBridge(object):
                                                              auto_start=False)
         self.srv_manipulation.start()
         moveit_commander.roscpp_initialize(sys.argv + ['__ns:=/hero'])
-        #TODO(Lars): make it whole_body
-        #TODO(Lars): fix base and whole body
-        self.group_name = "arm"
+        self.group_name = "whole_body"
 
         self.robot = moveit_commander.RobotCommander()
         self.scene = moveit_commander.PlanningSceneInterface(ns='/hero', synchronous=True)
         self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
+        self.move_group.set_workspace([0, 0, 0, 0])
 
     def manipulation_srv_inst(self, action):
         success = self.manipulation_srv(action)
@@ -52,37 +46,37 @@ class ManipulationBridge(object):
 
     def manipulation_srv(self, action):
         """
-        Here the grasp precompute action (TU/e) is translated to a PlanWithHandGoals (TMC) and send as goal to the robot
+        Here the grasp precompute action (TU/e) is sent to the robot through moveit
         :param action: the GraspPrecomputeAction type
         """
         success = True
-        # pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
-        # pose = [action.goal.x, action.goal.y, action.goal.z], pose_quaternion
-
-        # # Plan to a joint goal
-        # joint_goal = self.move_group.get_current_joint_values()
-        # joint_goal[0] = 0.3532629789664938
-        # joint_goal[1] = -0.4293987981401086
-        # joint_goal[2] = 1.1836900769463248
-        # joint_goal[3] = -0.840112834258244
-        # joint_goal[4] = 2.5121319061568474
-        # joint_goal[5] = 0.0
-        # self.move_group.go(joint_goal, wait=True)
-        # self.move_group.stop()
-        #TODO(Lars): change reference frame from odom to base_link?
-
         rospy.wait_for_service('ed/moveit_scene')
         try:
             moveit_call = rospy.ServiceProxy('ed/moveit_scene', Trigger)
             moveit_call()
         except rospy.ServiceException as e:
-            rospy.logerr('This is broken!')
+            rospy.logerr('The service call to ed/moveit_scene breaks, check that this service exists!')
+            success = False
 
-        rospy.logerr("This works!")
-        pose_goal = self.move_group.get_random_pose()
-        # cur_pose = move_group.get_current_pose()
+        pose_goal = PoseStamped()
+        point = Point()
+        pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
+        point.x = action.goal.x
+        point.y = action.goal.y
+        point.z = action.goal.z
+        pose_goal.pose.position = point
+        pose_goal.pose.orientation.x = pose_quaternion[0]
+        pose_goal.pose.orientation.y = pose_quaternion[1]
+        pose_goal.pose.orientation.z = pose_quaternion[2]
+        pose_goal.pose.orientation.w = pose_quaternion[3]
+        pose_goal.header.frame_id = 'base_link'
+        pose_goal.header.stamp = rospy.Time.now()
+
+        rospy.logerr(pose_goal)
+
         self.move_group.set_pose_target(pose_goal)
         plan = self.move_group.go(wait=True)
+        # todo: logging/debugging stuff
         self.move_group.stop()
         self.move_group.clear_pose_targets()
 
