@@ -60,19 +60,21 @@ class ManipulationBridge(object):
 
         pose_goal = PoseStamped()
         point = Point()
-        pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
-        point.x = action.goal.x
-        point.y = action.goal.y
-        point.z = action.goal.z
+        pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw) #-3.1415927410125732, -1.5707963705062866, 0.680213212966919)
+        point.x = action.goal.x #0.6055647134780884
+        point.y = action.goal.y # 0.1297377049922943
+        point.z = action.goal.z #0.699999988079071
         pose_goal.pose.position = point
         pose_goal.pose.orientation.x = pose_quaternion[0]
         pose_goal.pose.orientation.y = pose_quaternion[1]
         pose_goal.pose.orientation.z = pose_quaternion[2]
         pose_goal.pose.orientation.w = pose_quaternion[3]
-        pose_goal.header.frame_id = 'base_link'
+        pose_goal.header.frame_id = 'odom'
         pose_goal.header.stamp = rospy.Time.now()
 
         rospy.logerr(pose_goal)
+        # pose_goal = self.move_group.get_random_pose()
+        # rospy.logerr(pose_goal)
 
         self.move_group.set_pose_target(pose_goal)
         plan = self.move_group.go(wait=True)
