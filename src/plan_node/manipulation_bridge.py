@@ -8,18 +8,16 @@
 import moveit_commander
 import rospy
 import actionlib
+import sys
+import tf2_ros
+import tf2_geometry_msgs
 
-from tf.transformations import quaternion_from_euler, quaternion_multiply
-from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
+from tf.transformations import quaternion_from_euler
 
 from std_srvs.srv import Trigger
 from tue_manipulation_msgs.msg import GraspPrecomputeAction
-from geometry_msgs.msg import PoseStamped, Point, Pose
-from tmc_manipulation_msgs.msg import BaseMovementType, ArmManipulationErrorCodes
+from geometry_msgs.msg import PoseStamped, Point
 
-# Preparation to use robot functions
-from hsrb_interface import Robot, settings, geometry
-import sys
 
 
 class ManipulationBridge(object):
@@ -31,12 +29,18 @@ class ManipulationBridge(object):
                                                              auto_start=False)
         self.srv_manipulation.start()
         moveit_commander.roscpp_initialize(sys.argv + ['__ns:=/hero'])
+        #TODO: make changeable?
         self.group_name = "whole_body"
 
         self.robot = moveit_commander.RobotCommander()
+        #TODO: dynamic hero
         self.scene = moveit_commander.PlanningSceneInterface(ns='/hero', synchronous=True)
         self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
+        #TODO Check
         self.move_group.set_workspace([0, 0, 0, 0])
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
     def manipulation_srv_inst(self, action):
         success = self.manipulation_srv(action)
@@ -50,6 +54,7 @@ class ManipulationBridge(object):
         :param action: the GraspPrecomputeAction type
         """
         success = True
+        #todo move to init, put it in a timeout
         rospy.wait_for_service('ed/moveit_scene')
         try:
             moveit_call = rospy.ServiceProxy('ed/moveit_scene', Trigger)
@@ -60,21 +65,24 @@ class ManipulationBridge(object):
 
         pose_goal = PoseStamped()
         point = Point()
-        pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw) #-3.1415927410125732, -1.5707963705062866, 0.680213212966919)
-        point.x = action.goal.x #0.6055647134780884
-        point.y = action.goal.y # 0.1297377049922943
-        point.z = action.goal.z #0.699999988079071
+        pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
+        point.x = action.goal.x
+        point.y = action.goal.y
+        point.z = action.goal.z
         pose_goal.pose.position = point
         pose_goal.pose.orientation.x = pose_quaternion[0]
         pose_goal.pose.orientation.y = pose_quaternion[1]
         pose_goal.pose.orientation.z = pose_quaternion[2]
         pose_goal.pose.orientation.w = pose_quaternion[3]
-        pose_goal.header.frame_id = 'odom'
+        #todo: check whether this should be base_link or odom
+        pose_goal.header.frame_id = "base_link"
         pose_goal.header.stamp = rospy.Time.now()
 
-        rospy.logerr(pose_goal)
-        # pose_goal = self.move_group.get_random_pose()
-        # rospy.logerr(pose_goal)
+        try:
+            transform = self.tf_buffer.transform(pose_goal, "odom", timeout=rospy.Duration(1))
+            rospy.logerr(transform)
+        except Exception as e:
+            rospy.logerr(e)
 
         self.move_group.set_pose_target(pose_goal)
         plan = self.move_group.go(wait=True)
