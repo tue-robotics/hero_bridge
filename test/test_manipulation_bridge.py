@@ -8,8 +8,6 @@ import rospy
 import actionlib
 from tue_manipulation_msgs.msg import GraspPrecomputeAction, GraspPrecomputeGoal
 
-from robot_skills.arm.gripper import ParrallelGripper
-from robot_skills.robot_part import RobotPart
 
 def manipulation_client(x, y, z):
     # Creates the SimpleActionClient, passing the type of the action
@@ -34,8 +32,9 @@ def manipulation_client(x, y, z):
     grasp_precompute_goal.goal.y = y
     grasp_precompute_goal.goal.z = z
 
-    grasp_precompute_goal.goal.roll = 0
-    grasp_precompute_goal.goal.pitch = 0
+    # hero grasp offset: roll: 3.14159265359, pitch: -1.57079632679, yaw: 0.0
+    grasp_precompute_goal.goal.roll = 3.14159265359
+    grasp_precompute_goal.goal.pitch = -1.57079632679
     grasp_precompute_goal.goal.yaw = 0
 
     # Sends the goal to the action server.
@@ -49,18 +48,18 @@ def manipulation_client(x, y, z):
 
 
 if __name__ == '__main__':
-        parser = argparse.ArgumentParser(
-                description="Put an imaginary object in the world model and grasp it using the "
-                            "'Grab' smach state")
-        parser.add_argument("x", type=float, help="x-coordinate (in map) of the imaginary object")
-        parser.add_argument("y", type=float, help="y-coordinate (in map) of the imaginary object")
-        parser.add_argument("z", type=float, help="z-coordinate (in map) of the imaginary object")
-        args = parser.parse_args()
-        try:
-                # Initializes a rospy node so that the SimpleActionClient can
-                # publish and subscribe over ROS.
-                rospy.init_node('fibonacci_client_py')
-                result = manipulation_client(args.x, args.y, args.z)
-                print("Result:", ', '.join([str(n) for n in result.sequence]))
-        except rospy.ROSInterruptException:
-                print("program interrupted before completion", file=sys.stderr)
+    parser = argparse.ArgumentParser(
+            description="Put an imaginary object in the world model and grasp it using the "
+                        "'Grab' smach state")
+    parser.add_argument("x", type=float, help="x-coordinate (in map) of the imaginary object")
+    parser.add_argument("y", type=float, help="y-coordinate (in map) of the imaginary object")
+    parser.add_argument("z", type=float, help="z-coordinate (in map) of the imaginary object")
+    args = parser.parse_args()
+    try:
+        # Initializes a rospy node so that the SimpleActionClient can
+        # publish and subscribe over ROS.
+        rospy.init_node('fibonacci_client_py')
+        result = manipulation_client(args.x, args.y, args.z)
+        print("Result: {}".format(result))
+    except rospy.ROSInterruptException:
+        print("program interrupted before completion")
