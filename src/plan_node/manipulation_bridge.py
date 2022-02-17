@@ -38,6 +38,8 @@ class ManipulationBridge(object):
         self.scene = moveit_commander.PlanningSceneInterface(ns='/hero', synchronous=True)
         #TODO Check
         self.move_group.set_workspace([0, 0, 0, 0])
+        self.move_group.set_max_velocity_scaling_factor(0.7)
+        self.move_group.set_max_acceleration_scaling_factor(0.7)
 
         self.moveit_scene_srv = rospy.ServiceProxy('ed/moveit_scene', Trigger)
 
@@ -85,6 +87,19 @@ class ManipulationBridge(object):
             rospy.loginfo("transformed goal in odom frame: {}".format(transformed_goal))
         except Exception as e:  # TODO too general exception type
             rospy.logerr(e)
+            return False
+
+        try:
+            base_pose = self.tf_buffer.lookup_transform("odom", "base_link", rospy.Time(0))
+            rospy.loginfo("base pose: {}".format(base_pose))
+            self.move_group.set_workspace([base_pose.transform.translation.x - 1,
+                                          base_pose.transform.translation.y - 1,
+                                          0.0,
+                                          base_pose.transform.translation.x + 1,
+                                          base_pose.transform.translation.y + 1,
+                                          2.0])
+        except Exception as e:  # TODO too general exception type
+            rospy.logerr("could not get base pose: {}".format(e))
             return False
 
         # execute motion
