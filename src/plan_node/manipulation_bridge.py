@@ -76,17 +76,19 @@ class ManipulationBridge(object):
         pose_goal.pose.orientation.y = pose_quaternion[1]
         pose_goal.pose.orientation.z = pose_quaternion[2]
         pose_goal.pose.orientation.w = pose_quaternion[3]
-        #todo: check whether this should be base_link or odom
-        pose_goal.header.frame_id = "base_link"
+        pose_goal.header.frame_id = action.goal.header.frame_id
         pose_goal.header.stamp = rospy.Time.now()
 
+        # transform to odom frame
         try:
-            transform = self.tf_buffer.transform(pose_goal, "odom", timeout=rospy.Duration(1))
-            rospy.logerr(transform)
-        except Exception as e:
+            transformed_goal = self.tf_buffer.transform(pose_goal, "odom", timeout=rospy.Duration(1))
+            rospy.loginfo("transformed goal in odom frame: {}".format(transformed_goal))
+        except Exception as e:  # TODO too general exception type
             rospy.logerr(e)
+            return False
 
-        self.move_group.set_pose_target(pose_goal)
+        # execute motion
+        self.move_group.set_pose_target(transformed_goal)
         plan = self.move_group.go(wait=True)
         # todo: logging/debugging stuff
         self.move_group.stop()
