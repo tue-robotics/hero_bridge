@@ -19,7 +19,6 @@ from tue_manipulation_msgs.msg import GraspPrecomputeAction
 from geometry_msgs.msg import PoseStamped, Point
 
 
-
 class ManipulationBridge(object):
     def __init__(self):
         # server
@@ -28,16 +27,19 @@ class ManipulationBridge(object):
                                                              execute_cb=self.manipulation_srv_inst,
                                                              auto_start=False)
         self.srv_manipulation.start()
+
+        #initialise moveit commander
         moveit_commander.roscpp_initialize(sys.argv + ['__ns:=/hero'])
         #TODO: make changeable?
         self.group_name = "whole_body"
-
         self.robot = moveit_commander.RobotCommander()
+        self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
         #TODO: dynamic hero
         self.scene = moveit_commander.PlanningSceneInterface(ns='/hero', synchronous=True)
-        self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
         #TODO Check
         self.move_group.set_workspace([0, 0, 0, 0])
+
+        self.moveit_scene_srv = rospy.ServiceProxy('ed/moveit_scene', Trigger)
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -56,16 +58,13 @@ class ManipulationBridge(object):
         Here the grasp precompute action (TU/e) is sent to the robot through moveit
         :param action: the GraspPrecomputeAction type
         """
-        success = True
-        #todo move to init, put it in a timeout
-        rospy.wait_for_service('ed/moveit_scene')
+        # call planning scene service
         try:
-            moveit_call = rospy.ServiceProxy('ed/moveit_scene', Trigger)
-            moveit_call()
+            self.moveit_scene_srv.call()
         except rospy.ServiceException as e:
             rospy.logerr('The service call to ed/moveit_scene breaks, check that this service exists!')
-            success = False
 
+        # fill pose message
         pose_goal = PoseStamped()
         point = Point()
         pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
@@ -93,7 +92,7 @@ class ManipulationBridge(object):
         self.move_group.stop()
         self.move_group.clear_pose_targets()
 
-        return success
+        return True
 
 
 if __name__ == "__main__":
