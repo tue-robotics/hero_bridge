@@ -47,6 +47,9 @@ class ManipulationBridge(object):
         if success:
             rospy.loginfo('Manipulation bridge: Succeeded')
             self.srv_manipulation.set_succeeded()
+        else:
+            rospy.loginfo('Manipulation bridge: failed')
+            self.srv_manipulation.set_aborted()
 
     def manipulation_srv(self, action):
         """
