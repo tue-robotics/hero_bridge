@@ -21,14 +21,8 @@ from geometry_msgs.msg import PoseStamped, Point
 
 class ManipulationBridge(object):
     def __init__(self):
-        # server
-        self.srv_manipulation = actionlib.SimpleActionServer('arm_center/grasp_precompute',
-                                                             GraspPrecomputeAction,
-                                                             execute_cb=self.manipulation_srv_inst,
-                                                             auto_start=False)
-        self.srv_manipulation.start()
-
-        #initialise moveit commander
+        rospy.sleep(rospy.Duration(1.0)) # TODO wait for moveit to offer its services
+        # initialise moveit commander
         moveit_commander.roscpp_initialize(sys.argv + ['__ns:=/hero'])
         #TODO: make changeable?
         self.group_name = "whole_body"
@@ -36,8 +30,6 @@ class ManipulationBridge(object):
         self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
         #TODO: dynamic hero
         self.scene = moveit_commander.PlanningSceneInterface(ns='/hero', synchronous=True)
-        #TODO Check
-        self.move_group.set_workspace([0, 0, 0, 0])
         self.move_group.set_max_velocity_scaling_factor(0.7)
         self.move_group.set_max_acceleration_scaling_factor(0.7)
 
@@ -45,6 +37,13 @@ class ManipulationBridge(object):
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+
+        # server
+        self.srv_manipulation = actionlib.SimpleActionServer('arm_center/grasp_precompute',
+                                                             GraspPrecomputeAction,
+                                                             execute_cb=self.manipulation_srv_inst,
+                                                             auto_start=False)
+        self.srv_manipulation.start()
 
     def manipulation_srv_inst(self, action):
         success = self.manipulation_srv(action)
