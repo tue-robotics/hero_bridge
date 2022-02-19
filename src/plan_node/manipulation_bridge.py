@@ -21,13 +21,12 @@ from geometry_msgs.msg import PoseStamped, Point
 
 class ManipulationBridge(object):
     def __init__(self):
-        rospy.sleep(rospy.Duration(1.0)) # TODO wait for moveit to offer its services
         # initialise moveit commander
         moveit_commander.roscpp_initialize(sys.argv + ['__ns:=/hero'])
         #TODO: make changeable?
         self.group_name = "whole_body"
         self.robot = moveit_commander.RobotCommander()
-        self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
+        self.move_group = moveit_commander.MoveGroupCommander(self.group_name, wait_for_servers=10.0)
         #TODO: dynamic hero
         self.scene = moveit_commander.PlanningSceneInterface(ns='/hero', synchronous=True)
         self.move_group.set_max_velocity_scaling_factor(0.7)
