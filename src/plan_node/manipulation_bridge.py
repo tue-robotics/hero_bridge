@@ -10,24 +10,22 @@ import rospy
 import actionlib
 import sys
 import tf2_ros
-import tf2_geometry_msgs
+import tf2_geometry_msgs  # Do not remove! This contains vital transform functions.
 
 from tf.transformations import quaternion_from_euler
 
 from std_srvs.srv import Trigger
 from tue_manipulation_msgs.msg import GraspPrecomputeAction
-from geometry_msgs.msg import PoseStamped, Point
+from geometry_msgs.msg import PoseStamped
 
 
 class ManipulationBridge(object):
-    def __init__(self):
+    def __init__(self, group_name="whole_body_weighted"):
         # initialise moveit commander
         moveit_commander.roscpp_initialize(sys.argv + ['__ns:=/hero'])
-        #TODO: make changeable?
-        self.group_name = "whole_body"
+        self.group_name = group_name
         self.robot = moveit_commander.RobotCommander()
         self.move_group = moveit_commander.MoveGroupCommander(self.group_name, wait_for_servers=10.0)
-        #TODO: dynamic hero
         self.scene = moveit_commander.PlanningSceneInterface(ns='/hero', synchronous=True)
         self.move_group.set_max_velocity_scaling_factor(0.7)
         self.move_group.set_max_acceleration_scaling_factor(0.7)
@@ -66,12 +64,10 @@ class ManipulationBridge(object):
 
         # fill pose message
         pose_goal = PoseStamped()
-        point = Point()
         pose_quaternion = quaternion_from_euler(action.goal.roll, action.goal.pitch, action.goal.yaw)
-        point.x = action.goal.x
-        point.y = action.goal.y
-        point.z = action.goal.z
-        pose_goal.pose.position = point
+        pose_goal.pose.position.x = action.goal.x
+        pose_goal.pose.position.y = action.goal.y
+        pose_goal.pose.position.z = action.goal.z
         pose_goal.pose.orientation.x = pose_quaternion[0]
         pose_goal.pose.orientation.y = pose_quaternion[1]
         pose_goal.pose.orientation.z = pose_quaternion[2]
@@ -83,10 +79,11 @@ class ManipulationBridge(object):
         try:
             transformed_goal = self.tf_buffer.transform(pose_goal, "odom", timeout=rospy.Duration(1))
             rospy.loginfo("transformed goal in odom frame: {}".format(transformed_goal))
-        except Exception as e:  # TODO too general exception type
-            rospy.logerr(e)
+        except tf2_ros.TransformException as e:
+            rospy.logerr("Could not transform the goal pose to odom frame {}".format(e))
             return False
 
+        # set the workspace
         try:
             base_pose = self.tf_buffer.lookup_transform("odom", "base_link", rospy.Time(0))
             rospy.loginfo("base pose: {}".format(base_pose))
@@ -96,17 +93,16 @@ class ManipulationBridge(object):
                                           base_pose.transform.translation.x + 1,
                                           base_pose.transform.translation.y + 1,
                                           2.0])
-        except Exception as e:  # TODO too general exception type
-            rospy.logerr("could not get base pose: {}".format(e))
+
+        except tf2_ros.TransformException as e:
+            rospy.logerr("Could not get base pose in base_link frame: {}".format(e))
             return False
 
         # execute motion
         self.move_group.set_pose_target(transformed_goal)
         plan = self.move_group.go(wait=True)
-        # todo: logging/debugging stuff
         self.move_group.stop()
         self.move_group.clear_pose_targets()
-
         return True
 
 
