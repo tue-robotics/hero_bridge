@@ -15,6 +15,9 @@ from tf.transformations import quaternion_from_euler
 
 def create_grasp(x, y, z):
     grasp = Grasp()
+
+    grasp.id = "test_grasp"
+
     grasp.grasp_pose.header.frame_id = "base_link"
     grasp.grasp_pose.pose.position.x = x
     grasp.grasp_pose.pose.position.y = y
@@ -29,8 +32,21 @@ def create_grasp(x, y, z):
     grasp.grasp_pose.pose.orientation.w = q[3]
 
     grasp.pre_grasp_approach.direction.header.frame_id = "base_link"
+    grasp.pre_grasp_approach.direction.vector.x = 1
+    grasp.pre_grasp_approach.direction.vector.y = 0
+    grasp.pre_grasp_approach.direction.vector.z = 0
+    grasp.pre_grasp_approach.min_distance = 0
+    grasp.pre_grasp_approach.desired_distance = 0.1
 
     grasp.post_grasp_retreat.direction.header.frame_id = "base_link"
+    grasp.post_grasp_retreat.direction.vector.x = -1
+    grasp.post_grasp_retreat.direction.vector.y = 0
+    grasp.post_grasp_retreat.direction.vector.z = 0
+    grasp.post_grasp_retreat.min_distance = 0
+    grasp.post_grasp_retreat.desired_distance = 0.1
+
+    grasp.max_contact_force = 0
+    grasp.allowed_touch_objects = []
 
     return grasp
 
