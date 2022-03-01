@@ -25,7 +25,7 @@ class ManipulationBridge(object):
         moveit_commander.roscpp_initialize(sys.argv + ['__ns:=/hero'])
         self.group_name = group_name
         self.robot = moveit_commander.RobotCommander()
-        self.move_group = moveit_commander.MoveGroupCommander(self.group_name, wait_for_servers=10.0)
+        self.move_group = moveit_commander.MoveGroupCommander(self.group_name, wait_for_servers=0.0)
         self.scene = moveit_commander.PlanningSceneInterface(ns='/hero', synchronous=True)
         self.move_group.set_max_velocity_scaling_factor(0.7)
         self.move_group.set_max_acceleration_scaling_factor(0.7)
@@ -50,6 +50,15 @@ class ManipulationBridge(object):
         else:
             rospy.loginfo('Manipulation bridge: failed')
             self.srv_manipulation.set_aborted()
+
+    def set_workspace(self):
+        base_pose = self.tf_buffer.lookup_transform("odom", "base_link", rospy.Time(0))
+        self.move_group.set_workspace([base_pose.transform.translation.x - 1,
+                                       base_pose.transform.translation.y - 1,
+                                       0.0,
+                                       base_pose.transform.translation.x + 1,
+                                       base_pose.transform.translation.y + 1,
+                                       2.0])
 
     def manipulation_srv(self, action):
         """
@@ -78,22 +87,13 @@ class ManipulationBridge(object):
         # transform to odom frame
         try:
             transformed_goal = self.tf_buffer.transform(pose_goal, "odom", timeout=rospy.Duration(1))
-            rospy.loginfo("transformed goal in odom frame: {}".format(transformed_goal))
-        except tf2_ros.TransformException as e:
+        except tf2_ros.TransformException as e: # TODO proper import
             rospy.logerr("Could not transform the goal pose to odom frame {}".format(e))
             return False
 
         # set the workspace
         try:
-            base_pose = self.tf_buffer.lookup_transform("odom", "base_link", rospy.Time(0))
-            rospy.loginfo("base pose: {}".format(base_pose))
-            self.move_group.set_workspace([base_pose.transform.translation.x - 1,
-                                          base_pose.transform.translation.y - 1,
-                                          0.0,
-                                          base_pose.transform.translation.x + 1,
-                                          base_pose.transform.translation.y + 1,
-                                          2.0])
-
+            self.set_workspace()
         except tf2_ros.TransformException as e:
             rospy.logerr("Could not get base pose in base_link frame: {}".format(e))
             return False
@@ -101,9 +101,10 @@ class ManipulationBridge(object):
         # execute motion
         self.move_group.set_pose_target(transformed_goal)
         plan = self.move_group.go(wait=True)
+        rospy.logwarn("plan: {}".format(plan))
         self.move_group.stop()
         self.move_group.clear_pose_targets()
-        return True
+        return plan
 
 
 if __name__ == "__main__":
