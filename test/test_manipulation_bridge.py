@@ -3,16 +3,41 @@ from __future__ import print_function
 # System
 import argparse
 
+import geometry_msgs.msg
+import moveit_commander
+import moveit_msgs.msg
+
 import time
 import rospy
 import actionlib
 from tue_manipulation_msgs.msg import GraspPrecomputeAction, GraspPrecomputeGoal
 
 
+def add_objects():
+    scene = moveit_commander.PlanningSceneInterface(ns='hero')
+
+    rospy.sleep(1)
+
+    # remove all objects
+    scene.remove_world_object()
+    rospy.sleep(1)
+
+    # add wall
+    wall_size = [0.4, 0.4, 0.7]
+    p = geometry_msgs.msg.PoseStamped()
+    p.header.frame_id = "odom"
+    p.pose.position.x = 0.6
+    p.pose.position.y = 0.0
+    p.pose.position.z = 0.35
+    p.pose.orientation.w = 1.0
+    scene.add_box("wall", p, wall_size)
+    rospy.sleep(1)
+
+
 def manipulation_client(x, y, z):
     # Creates the SimpleActionClient, passing the type of the action
     # (FibonacciAction) to the constructor.
-    client = actionlib.SimpleActionClient("hero/arm_center/grasp_precompute", GraspPrecomputeAction)
+    client = actionlib.SimpleActionClient("/hero/arm_center/grasp_precompute", GraspPrecomputeAction)
 
     # Waits until the action server has started up and started
     # listening for goals.
@@ -59,6 +84,7 @@ if __name__ == '__main__':
         # Initializes a rospy node so that the SimpleActionClient can
         # publish and subscribe over ROS.
         rospy.init_node('fibonacci_client_py')
+    #    add_objects()
         result = manipulation_client(args.x, args.y, args.z)
         print("Result: {}".format(result))
     except rospy.ROSInterruptException:
