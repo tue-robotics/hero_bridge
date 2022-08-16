@@ -147,8 +147,13 @@ class TTS(object):
                     rospy.logdebug("Checking for file on path: " + potential_filename)
                     if os.path.isfile(potential_filename):
                         rospy.logdebug(f"Found file: {potential_filename}")
+                        rospy.logdebug(f"play '{potential_filename}' pitch 0 > /dev/null 2>&1")
                         err_code = os.system(f"play '{potential_filename}' pitch 0 > /dev/null 2>&1")
-                        break
+                        if not err_code:
+                            self._active_req = None
+                            break
+                        else:
+                            rospy.logdebug(f"Error during playing of '{potential_filename}': {err_code}")
 
                 else:
                     # Bridge between the req object and simple_action_client goal object
@@ -168,6 +173,7 @@ class TTS(object):
 
                 # Pop left-most queue entry
                 if self.buffer:
+                    rospy.loginfo("buffer.popleft")
                     self.buffer.popleft()
                 rospy.logdebug("Buffer size [{}]: Send TTS request and removed from queue.".format(len(self.buffer)))
 
