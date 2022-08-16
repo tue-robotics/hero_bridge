@@ -25,4 +25,7 @@
   <depend>tue_manipulation_msgs</depend>
   <depend>tue_msgs</depend>
 
+  <exec_depend>sox</exec_depend>
+  <exec_depend>libsox-fmt-mp3</exec_depend>
+
 </package>
