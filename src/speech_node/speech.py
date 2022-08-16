@@ -147,7 +147,8 @@ class TTS(object):
                     rospy.logdebug("Checking for file on path: " + potential_filename)
                     if os.path.isfile(potential_filename):
                         rospy.logdebug(f"Found file: {potential_filename}")
-                        err_code = os.system(f"play {potential_filename} pitch 0 > /dev/null 2>&1")
+                        err_code = os.system(f"play '{potential_filename}' pitch 0 > /dev/null 2>&1")
+                        break
 
                 else:
                     # Bridge between the req object and simple_action_client goal object
