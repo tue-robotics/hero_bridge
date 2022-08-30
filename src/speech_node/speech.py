@@ -141,6 +141,9 @@ class TTS(object):
             if self.buffer and self._active_req is None:
                 self._active_req = self.buffer[0]
 
+                # Publish what the robot is going to say
+                self.pub_sentence.publish(self._active_req.sentence)
+
                 for extension in ["wav", "mp3", "oga"]:
                     potential_filename = os.path.join(os.path.expanduser(self.samples_path),
                                                       self._active_req.sentence.lower() + "." + extension)
@@ -164,9 +167,6 @@ class TTS(object):
                     out.language = 1
                     out.sentence = self._active_req.sentence
                     goal.data = out
-
-                    # Publish what the robot is going to say
-                    self.pub_sentence.publish(self._active_req.sentence)
 
                     # Send the left-most queue entry to Toyota TTS over the simple_action_client
                     self.speech_client.send_goal(goal, done_cb=self._done_cb)
