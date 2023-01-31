@@ -20,7 +20,7 @@ class HeadBridge(object):
         self.prev_data.position = [0.0, 0.0]
 
         # topics
-        self.sub_speak = rospy.Subscriber("neck/references", JointState, self.callback)
+        self.sub_refs = rospy.Subscriber("neck/references", JointState, self.callback)
 
         # clients
         self.client_safe_joint_change = rospy.ServiceProxy('safe_pose_changer/change_joint', SafeJointChange)
