@@ -70,14 +70,23 @@ class ManipulationBridge(object):
 
         service_name = self.whole_body._setting['plan_with_hand_goals_service']
         plan_service = rospy.ServiceProxy(service_name, PlanWithHandGoals)
+        start = rospy.Time.now()
         res = plan_service.call(req)
+        end = rospy.Time.now()
+        rospy.loginfo('Plan with hand goals: %f', (end - start).to_sec())
         if res.error_code.val != ArmManipulationErrorCodes.SUCCESS:
             rospy.logerr('Fail to plan move_endpoint')
             success = False
         else:
             res.base_solution.header.frame_id = settings.get_frame('odom')
+            start = rospy.Time.now()
             constrained_traj = self.whole_body._constrain_trajectories(res.solution, res.base_solution)
+            end = rospy.Time.now()
+            rospy.loginfo('Constrain trajectories: %f', (end - start).to_sec())
+            start = rospy.Time.now()
             self.whole_body._execute_trajectory(constrained_traj)
+            end = rospy.Time.now()
+            rospy.loginfo('Execute trajectory: %f', (end - start).to_sec())
 
         return success
 
