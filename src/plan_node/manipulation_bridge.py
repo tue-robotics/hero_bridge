@@ -9,13 +9,41 @@
 import rospy
 import actionlib
 
-from tf.transformations import quaternion_from_euler, quaternion_multiply
+from tf.transformations import quaternion_from_euler
 from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
 from tue_manipulation_msgs.msg import GraspPrecomputeAction
-from tmc_manipulation_msgs.msg import BaseMovementType, ArmManipulationErrorCodes
+from tmc_manipulation_msgs.msg import CollisionObject, CollisionObjectOperation, BaseMovementType, ArmManipulationErrorCodes
+from tmc_geometric_shapes_msgs.msg import Shape
 
 # Preparation to use robot functions
 from hsrb_interface import Robot, settings, geometry
+
+
+def addBox(x=0.1, y=0.1, z=0.1, pose=geometry.pose(), frame_id='map', name='box', timeout=1.0):
+    """
+    Add a box to the collision world
+
+    :param x: x dimension of the box
+    :param y: y dimension of the box
+    :param z: z dimension of the box
+    :param pose: pose of the box
+    :param frame_id: frame_id of the box
+    :param name: name of the box
+    :param timeout: timeout for the service call
+    """
+    box = CollisionObject()
+    shape = Shape()
+    shape.type = Shape.BOX
+    shape.dimensions = [x, y, z]
+    pose = geometry.tuples_to_pose(pose)
+    box.operation.operation = CollisionObjectOperation.ADD
+    box.id.object_id = 0
+    box.id.name = name
+    box.shapes = [shape]
+    box.poses = [pose]
+    box.header.frame_id = frame_id
+    box.header.stamp = rospy.Time.now()
+    return box
 
 
 class ManipulationBridge(object):
@@ -63,10 +91,11 @@ class ManipulationBridge(object):
             odom_to_hand = geometry.multiply_tuples(odom_to_ref, ref_to_hand)
             odom_to_hand_poses.append(geometry.tuples_to_pose(odom_to_hand))
 
-        req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)
+        req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)  # type: PlanWithHandGoalsRequest
+        req.environment_before_planning.known_objects.append(addBox(x=1.2, y=0.8, z=0.76, pose=geometry.pose(z=0.38), frame_id='map', name='box', timeout=5.0))
         req.origin_to_hand_goals = odom_to_hand_poses
         req.ref_frame_id = self.whole_body._end_effector_frame
-        req.base_movement_type.val = BaseMovementType.ROTATION_Z
+        req.base_movement_type.val = BaseMovementType.PLANAR
 
         service_name = self.whole_body._setting['plan_with_hand_goals_service']
         plan_service = rospy.ServiceProxy(service_name, PlanWithHandGoals)
