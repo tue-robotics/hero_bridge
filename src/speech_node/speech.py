@@ -5,6 +5,7 @@
 This node listens to a service call and a topic for text to speech
 requests. These will be processed by the festival or the philips tts module.
 """
+import os.path
 
 import rospy
 import actionlib
@@ -140,23 +141,39 @@ class TTS(object):
             if self.buffer and self._active_req is None:
                 self._active_req = self.buffer[0]
 
-                # Bridge between the req object and simple_action_client goal object
-                goal = TalkRequestGoal()
-                out = Voice()
-                out.interrupting = False
-                out.queueing = True
-                out.language = 1
-                out.sentence = self._active_req.sentence
-                goal.data = out
-
                 # Publish what the robot is going to say
                 self.pub_sentence.publish(self._active_req.sentence)
 
-                # Send the left-most queue entry to Toyota TTS over the simple_action_client
-                self.speech_client.send_goal(goal, done_cb=self._done_cb)
+                for extension in ["wav", "mp3", "oga"]:
+                    potential_filename = os.path.join(os.path.expanduser(self.samples_path),
+                                                      self._active_req.sentence.lower() + "." + extension)
+                    rospy.logdebug("Checking for file on path: " + potential_filename)
+                    if os.path.isfile(potential_filename):
+                        rospy.logdebug(f"Found file: {potential_filename}")
+                        rospy.logdebug(f"play '{potential_filename}' pitch 0 > /dev/null 2>&1")
+                        err_code = os.system(f"play '{potential_filename}' pitch 0 > /dev/null 2>&1")
+                        if not err_code:
+                            self._active_req = None
+                            break
+                        else:
+                            rospy.logdebug(f"Error during playing of '{potential_filename}': {err_code}")
+
+                else:
+                    # Bridge between the req object and simple_action_client goal object
+                    goal = TalkRequestGoal()
+                    out = Voice()
+                    out.interrupting = False
+                    out.queueing = True
+                    out.language = 1
+                    out.sentence = self._active_req.sentence
+                    goal.data = out
+
+                    # Send the left-most queue entry to Toyota TTS over the simple_action_client
+                    self.speech_client.send_goal(goal, done_cb=self._done_cb)
 
                 # Pop left-most queue entry
                 if self.buffer:
+                    rospy.loginfo("buffer.popleft")
                     self.buffer.popleft()
                 rospy.logdebug("Buffer size [{}]: Send TTS request and removed from queue.".format(len(self.buffer)))
 
