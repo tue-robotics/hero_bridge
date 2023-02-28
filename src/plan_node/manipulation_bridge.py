@@ -95,7 +95,9 @@ class ManipulationBridge(object):
             odom_to_hand_poses.append(geometry.tuples_to_pose(odom_to_hand))
 
         req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)  # type: PlanWithHandGoalsRequest
-        req.environment_before_planning.known_objects.append(addBox(x=1.2, y=0.8, z=0.76, pose=geometry.pose(z=0.38), frame_id='map', name='box', timeout=15.0))
+        req.environment_before_planning.header.frame_id = "map"
+        req.environment_before_planning.header.stamp = rospy.Time.now()
+        req.environment_before_planning.known_objects.append(addBox(x=1.2, y=0.8, z=0.06, pose=geometry.pose(x=4.50, y=1.15, z=0.73), frame_id='map', name='box', timeout=15.0))
         pose = Pose()
         pose.orientation.w = 1.0
         req.environment_before_planning.poses.append(pose)
@@ -105,15 +107,16 @@ class ManipulationBridge(object):
 
         service_name = self.whole_body._setting['plan_with_hand_goals_service']
         plan_service = rospy.ServiceProxy(service_name, PlanWithHandGoals)
+        rospy.loginfo(f"{req=}")
         start = rospy.Time.now()
         res = plan_service.call(req)
         end = rospy.Time.now()
         rospy.loginfo('Plan with hand goals: %f', (end - start).to_sec())
         if res.error_code.val != ArmManipulationErrorCodes.SUCCESS:
-            rospy.logerr('Fail to plan move_endpoint')
+            rospy.logerr(f'Fail to plan move_endpoint({res.error_code.val})')
             success = False
         else:
-            res.base_solution.header.frame_id = settings.get_frame('odom')
+            res.base_solution.header.frame_id = "map"
             start = rospy.Time.now()
             constrained_traj = self.whole_body._constrain_trajectories(res.solution, res.base_solution)
             end = rospy.Time.now()
