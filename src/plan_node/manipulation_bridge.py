@@ -95,7 +95,7 @@ class ManipulationBridge(object):
             odom_to_hand_poses.append(geometry.tuples_to_pose(odom_to_hand))
 
         req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)  # type: PlanWithHandGoalsRequest
-        req.environment_before_planning.header.frame_id = "map"
+        req.environment_before_planning.header.frame_id = settings.get_frame('odom')
         req.environment_before_planning.header.stamp = rospy.Time.now()
         req.environment_before_planning.known_objects.append(addBox(x=1.2, y=0.8, z=0.06, pose=geometry.pose(x=4.50, y=1.15, z=0.73), frame_id='map', name='box', timeout=15.0))
         pose = Pose()
@@ -116,7 +116,7 @@ class ManipulationBridge(object):
             rospy.logerr(f'Fail to plan move_endpoint({res.error_code.val})')
             success = False
         else:
-            res.base_solution.header.frame_id = "map"
+            res.base_solution.header.frame_id = settings.get_frame('odom')
             start = rospy.Time.now()
             constrained_traj = self.whole_body._constrain_trajectories(res.solution, res.base_solution)
             end = rospy.Time.now()
