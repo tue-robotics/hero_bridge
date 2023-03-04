@@ -14,12 +14,14 @@ from geometry_msgs.msg import Pose
 
 from tf.transformations import quaternion_from_euler
 from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
-from tue_manipulation_msgs.msg import GraspPrecomputeAction
+from tue_manipulation_msgs.msg import GraspPrecomputeAction, GraspPrecomputeGoal
 from tmc_manipulation_msgs.msg import CollisionObject, CollisionObjectOperation, BaseMovementType, ArmManipulationErrorCodes
 from tmc_geometric_shapes_msgs.msg import Shape
 
 # Preparation to use robot functions
 from hsrb_interface import Robot, settings, geometry
+from hsrb_interface.collision_world import CollisionWorld
+from hsrb_interface.joint_group import JointGroup
 
 
 def addBox(x=0.1, y=0.1, z=0.1, pose=geometry.pose(), frame_id='map', name='box', timeout=1.0):
@@ -54,7 +56,9 @@ class ManipulationBridge(object):
 
         # robot
         self.robot = Robot()
-        self.whole_body = self.robot.try_get('whole_body')
+        self.whole_body = self.robot.try_get('whole_body')  # type: JointGroup
+        self.collision_world = self.robot.try_get('global_collision_world')  # type: CollisionWorld
+        self.whole_body.collision_world = self.collision_world
 
         # server
         self.srv_manipulation = actionlib.SimpleActionServer('arm_center/grasp_precompute',
@@ -94,10 +98,10 @@ class ManipulationBridge(object):
             odom_to_hand = geometry.multiply_tuples(odom_to_ref, ref_to_hand)
             odom_to_hand_poses.append(geometry.tuples_to_pose(odom_to_hand))
 
+        self.collision_world.remove_all()
+        self.collision_world.add_box(1.2, 0.8, 0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table',
+                                     name='box', timeout=15.0)
         req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)  # type: PlanWithHandGoalsRequest
-        req.environment_before_planning.header.frame_id = settings.get_frame('odom')
-        req.environment_before_planning.header.stamp = rospy.Time.now()
-        req.environment_before_planning.known_objects.append(addBox(x=1.1, y=0.8, z=0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table', name='box', timeout=15.0))
         pose = Pose()
         pose.orientation.w = 1.0
         req.environment_before_planning.poses.append(pose)
