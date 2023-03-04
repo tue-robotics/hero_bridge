@@ -67,13 +67,13 @@ class ManipulationBridge(object):
                                                                   auto_start=False)
         self.srv_manipulation.start()
 
-    def manipulation_srv_inst(self, action):
+    def manipulation_srv_inst(self, action: GraspPrecomputeGoal):
         success = self.manipulation_srv(action)
         if success:
             rospy.loginfo('Manipulation bridge: Succeeded')
             self.srv_manipulation.set_succeeded()
 
-    def manipulation_srv(self, action):
+    def manipulation_srv(self, action: GraspPrecomputeGoal):
         """
         Here the grasp precompute action (TU/e) is translated to a PlanWithHandGoals (TMC) and send as goal to the robot
         :param action: the GraspPrecomputeAction type
