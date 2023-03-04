@@ -97,7 +97,7 @@ class ManipulationBridge(object):
         req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)  # type: PlanWithHandGoalsRequest
         req.environment_before_planning.header.frame_id = settings.get_frame('odom')
         req.environment_before_planning.header.stamp = rospy.Time.now()
-        req.environment_before_planning.known_objects.append(addBox(x=1., y=0.8, z=0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table', name='box', timeout=15.0))
+        req.environment_before_planning.known_objects.append(addBox(x=1.1, y=0.8, z=0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table', name='box', timeout=15.0))
         pose = Pose()
         pose.orientation.w = 1.0
         req.environment_before_planning.poses.append(pose)
