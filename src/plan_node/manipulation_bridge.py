@@ -15,13 +15,17 @@ from geometry_msgs.msg import Pose
 from tf.transformations import quaternion_from_euler
 from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
 from tue_manipulation_msgs.msg import GraspPrecomputeAction, GraspPrecomputeGoal
-from tmc_manipulation_msgs.msg import CollisionObject, CollisionObjectOperation, BaseMovementType, ArmManipulationErrorCodes
+from tmc_manipulation_msgs.msg import CollisionObject, CollisionObjectOperation, BaseMovementType, ArmManipulationErrorCodes, CollisionEnvironment
 from tmc_geometric_shapes_msgs.msg import Shape
 
 # Preparation to use robot functions
 from hsrb_interface import Robot, settings, geometry
 from hsrb_interface.collision_world import CollisionWorld
 from hsrb_interface.joint_group import JointGroup
+
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
 
 
 def addBox(x=0.1, y=0.1, z=0.1, pose=geometry.pose(), frame_id='map', name='box', timeout=1.0):
@@ -57,8 +61,29 @@ class ManipulationBridge(object):
         # robot
         self.robot = Robot()
         self.whole_body = self.robot.try_get('whole_body')  # type: JointGroup
-        self.collision_world = self.robot.try_get('global_collision_world')  # type: CollisionWorld
-        self.whole_body.collision_world = self.collision_world
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self._tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        # self.collision_world = self.robot.try_get('global_collision_world')  # type: CollisionWorld
+        # self.whole_body.collision_world = self.collision_world
+
+        # self.collision_world.remove_all()
+        # self.collision_world.add_box(1.2, 0.8, 0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table',
+        #                              name='box', timeout=30.0)
+        # self.collision_world.add_box(1.2, 0.8, 0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table',
+        #                              name='box2', timeout=30.0)
+        # rospy.sleep(10)
+        # r = rospy.Rate(5)
+        # # while not rospy.is_shutdown():
+        # #     rospy.wait_for_message()
+        # snapshot = self.collision_world.snapshot(settings.get_frame('odom'))
+        # rospy.logwarn(f"{snapshot=}")
+        # selfgenerated = CollisionEnvironment()
+        # selfgenerated.header.frame_id = settings.get_frame('odom')
+        # selfgenerated.header.stamp = rospy.Time.now()
+        # selfgenerated.known_objects.append(
+        #     addBox(x=1.2, y=0.8, z=0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table', name='box'))
+        # rospy.logwarn(f"{selfgenerated=}")
 
         # server
         self.srv_manipulation = actionlib.SimpleActionServer('arm_center/grasp_precompute',
@@ -101,13 +126,22 @@ class ManipulationBridge(object):
             odom_to_hand = geometry.multiply_tuples(odom_to_ref, ref_to_hand)
             odom_to_hand_poses.append(geometry.tuples_to_pose(odom_to_hand))
 
-        self.collision_world.remove_all()
-        self.collision_world.add_box(1.2, 0.8, 0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table',
-                                     name='box', timeout=15.0)
+        # self.collision_world.remove_all()
+        # self.collision_world.add_box(1.2, 0.8, 0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table',
+        #                              name='box', timeout=15.0)
         req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)  # type: PlanWithHandGoalsRequest
+        req.environment_before_planning.header.frame_id = settings.get_frame('odom')
+        req.environment_before_planning.header.stamp = rospy.Time.now()
+        req.environment_before_planning.known_objects.append(
+            addBox(x=1.2, y=0.8, z=0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table', name='box'))
+        transform = self.tf_buffer.lookup_transform(settings.get_frame('odom'), 'dinner_table', rospy.Time(0), rospy.Duration(1))
         pose = Pose()
-        pose.orientation.w = 1.0
+        pose.position.x = transform.transform.translation.x
+        pose.position.y = transform.transform.translation.y
+        pose.position.z = transform.transform.translation.z
+        pose.orientation = transform.transform.rotation
         req.environment_before_planning.poses.append(pose)
+        rospy.loginfo(f"{req.environment_before_planning=}")
         req.origin_to_hand_goals = odom_to_hand_poses
         req.ref_frame_id = self.whole_body._end_effector_frame
         req.base_movement_type.val = BaseMovementType.PLANAR
