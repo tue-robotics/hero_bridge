@@ -25,5 +25,7 @@
         <remap from="/get_collision_environment" to="get_collision_environment"/>
         <remap from="/known_object" to="known_object"/>
         <remap from="/known_object_ids" to="known_object_ids"/>
+
+        <remap from="/robot_description" to="robot_description"/>
     </node>
 </launch>
