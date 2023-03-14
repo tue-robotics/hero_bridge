@@ -10,7 +10,8 @@ from random import randint
 import rospy
 import actionlib
 
-from geometry_msgs.msg import Pose
+from ed_tmc_collision_msgs.srv import GetCollisionEnvironment, GetCollisionEnvironmentRequest, GetCollisionEnvironmentResponse
+from geometry_msgs.msg import Point, Pose
 
 from tf.transformations import quaternion_from_euler
 from tmc_planning_msgs.srv import PlanWithHandGoals, PlanWithHandGoalsRequest
@@ -90,6 +91,9 @@ class ManipulationBridge:
                                                             GraspPrecomputeAction,
                                                             execute_cb=self.manipulation_as_exec,
                                                             auto_start=False)
+        self.collisions_env_srv = rospy.ServiceProxy("ed/tmc_collision/get_collision_environment",
+                                                     GetCollisionEnvironment)
+        # Waiting for srv is useless as bridge is started much earlier than the service in ED
         self.manipulation_as.start()
 
     def manipulation_as_exec(self, action: GraspPrecomputeGoal):
@@ -129,10 +133,15 @@ class ManipulationBridge:
         # self.collision_world.remove_all()
         # self.collision_world.add_box(1.2, 0.8, 0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table',
         #                              name='box', timeout=15.0)
+        env_req = GetCollisionEnvironmentRequest()
+        env_req.frame_id = settings.get_frame('odom')
+        resp = self.collisions_env_srv(env_req)  # type: GetCollisionEnvironmentResponse
+        rospy.logwarn(f"{resp.collision_environment=}")
         req = self.whole_body._generate_planning_request(PlanWithHandGoalsRequest)  # type: PlanWithHandGoalsRequest
-        req.environment_before_planning.header.frame_id = settings.get_frame('odom')
-        req.environment_before_planning.header.stamp = rospy.Time.now()
-        req.environment_before_planning.known_objects.append(
+        bla = CollisionEnvironment()
+        bla.header.frame_id = settings.get_frame('odom')
+        bla.header.stamp = rospy.Time.now()
+        bla.known_objects.append(
             addBox(x=1.2, y=0.8, z=0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table', name='box'))
         transform = self.tf_buffer.lookup_transform(settings.get_frame('odom'), 'dinner_table', rospy.Time(0), rospy.Duration(1))
         pose = Pose()
@@ -140,15 +149,29 @@ class ManipulationBridge:
         pose.position.y = transform.transform.translation.y
         pose.position.z = transform.transform.translation.z
         pose.orientation = transform.transform.rotation
-        req.environment_before_planning.poses.append(pose)
+        bla.poses.append(pose)
+        req.environment_before_planning = resp.collision_environment
+        req.environment_before_planning.known_objects[0].shapes[0] = bla.known_objects[0].shapes[0]
+        req.environment_before_planning.poses[0] = bla.poses[0]
+        # req.environment_before_planning.header.frame_id = settings.get_frame('odom')
+        # req.environment_before_planning.header.stamp = rospy.Time.now()
+        # req.environment_before_planning.known_objects.append(
+        #     addBox(x=1.2, y=0.8, z=0.06, pose=geometry.pose(x=0., y=0., z=0.73), frame_id='dinner_table', name='box'))
+        # transform = self.tf_buffer.lookup_transform(settings.get_frame('odom'), 'dinner_table', rospy.Time(0), rospy.Duration(1))
+        # pose = Pose()
+        # pose.position.x = transform.transform.translation.x
+        # pose.position.y = transform.transform.translation.y
+        # pose.position.z = transform.transform.translation.z
+        # pose.orientation = transform.transform.rotation
+        # req.environment_before_planning.poses.append(pose)
         rospy.loginfo(f"{req.environment_before_planning=}")
+        req.environment_before_planning = resp.collision_environment
         req.origin_to_hand_goals = odom_to_hand_poses
         req.ref_frame_id = self.whole_body._end_effector_frame
         req.base_movement_type.val = BaseMovementType.PLANAR
 
         service_name = self.whole_body._setting['plan_with_hand_goals_service']
         plan_service = rospy.ServiceProxy(service_name, PlanWithHandGoals)
-        rospy.loginfo(f"{req=}")
         start = rospy.Time.now()
         res = plan_service.call(req)
         end = rospy.Time.now()
