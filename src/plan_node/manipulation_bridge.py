@@ -55,7 +55,7 @@ def addBox(x=0.1, y=0.1, z=0.1, pose=geometry.pose(), frame_id='map', name='box'
     return box
 
 
-class ManipulationBridge(object):
+class ManipulationBridge:
     def __init__(self):
 
         # robot
