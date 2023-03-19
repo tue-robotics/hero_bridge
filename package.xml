@@ -15,16 +15,20 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>control_msgs</depend>
+  <depend>ed_tmc_collision_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>text_to_speech</depend>
   <depend>tf_conversions</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tmc_msgs</depend>
+  <depend>tmc_manipulation_msgs</depend>
   <depend>tue_manipulation_msgs</depend>
   <depend>tue_msgs</depend>
 
+  <exec_depend>hsrb_interface_py</exec_depend>
   <exec_depend>sox</exec_depend>
   <exec_depend>libsox-fmt-mp3</exec_depend>
 
