@@ -89,6 +89,9 @@ class ManipulationBridge:
 
         if self.collision_avoidance:
             env_req = GetCollisionEnvironmentRequest()
+            env_req.include_walls = True
+            env_req.entity_range = float("inf")
+            # ToDO: env_req.required_entities = ["supporting object"]
             env_req.frame_id = settings.get_frame('odom')
             env_resp = self.collisions_env_srv(env_req)  # type: GetCollisionEnvironmentResponse
             req.environment_before_planning = env_resp.collision_environment
