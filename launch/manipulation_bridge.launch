@@ -21,11 +21,5 @@
         <remap from="/plan_with_hand_line" to="plan_with_hand_line"/>
         <remap from="/plan_with_joint_goals" to="plan_with_joint_goals"/>
         <remap from="/filter_hsrb_trajectory" to="filter_hsrb_trajectory"/>
-        <!-- collision world -->
-        <remap from="/get_collision_environment" to="get_collision_environment"/>
-        <remap from="/known_object" to="known_object"/>
-        <remap from="/known_object_ids" to="known_object_ids"/>
-
-        <remap from="/robot_description" to="robot_description"/>
     </node>
 </launch>
