@@ -35,7 +35,7 @@ class ManipulationBridge:
         # robot
         self.robot = Robot()
         self.whole_body = self.robot.try_get('whole_body')  # type: JointGroup
-        self.whole_body.linear_weight = 50.0  # Do move as little as possible
+        self.whole_body.linear_weight = 25.0  # Do move as little as possible
 
         self.collision_avoidance = True
 
